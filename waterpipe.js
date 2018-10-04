@@ -50,17 +50,25 @@
             this.generate();
         },
         initSettings: function () {
-            var radius = this.$element.height()*0.8/2;
+            var radius = this.$element.height()*1/5;
             if(this.settings.maxMaxRad==='auto') this.settings.maxMaxRad = radius;
             if(this.settings.minMaxRad==='auto') this.settings.minMaxRad = radius;
         },
         initCanvas: function () {
-            this.displayCanvas = this.$element.find('canvas');
-            this.displayWidth = this.$element[0].clientWidth;
-            this.displayHeight = this.$element[0].clientHeight;
-            this.displayCanvas[0].width = this.displayWidth;
-            this.displayCanvas[0].height = this.displayHeight;
-            this.context = this.displayCanvas[0].getContext("2d");
+            this.displayCanvas = this.$element.find('canvas')[0];
+            this.bufferCanvas = document.createElement("canvas");
+            this.backgroundCanvas = document.createElement("canvas");
+            this.displayWidth = this.$element[0].offsetWidth + 500;
+            this.displayHeight = this.$element[0].offsetHeight + 500;
+            this.displayCanvas.width = this.displayWidth;
+            this.displayCanvas.height = this.displayHeight;
+            this.bufferCanvas.width = this.displayWidth;
+            this.bufferCanvas.height = this.displayHeight;
+            this.backgroundCanvas.width = this.displayWidth;
+            this.backgroundCanvas.height = this.displayHeight;
+            this.context = this.displayCanvas.getContext("2d");
+            this.bufferContext = this.bufferCanvas.getContext("2d");
+            this.backgroundContext = this.bufferCanvas.getContext("2d");
 
             //off screen canvas used only when exporting image
             this.exportCanvas = document.createElement('canvas');
@@ -70,8 +78,8 @@
         },
         generate: function () {
             this.drawCount = 0;
-            this.context.setTransform(1,0,0,1,0,0);
-            this.context.clearRect(0,0,this.displayWidth,this.displayHeight);
+            this.bufferContext.setTransform(1,0,0,1,0,0);
+            this.bufferContext.clearRect(0,0,this.displayWidth,this.displayHeight);
             this.fillBackground();
             
             this.setCircles();
@@ -97,7 +105,7 @@
 
             this.niceGradient.addColorStop(0,r0,g0,b0);
             this.niceGradient.addColorStop(1,r1,g1,b1);     
-            this.niceGradient.fillRect(this.context,0,0,this.displayWidth,this.displayHeight);
+            this.niceGradient.fillRect(this.backgroundContext,0,0,this.displayWidth,this.displayHeight);
         },
         setCircles: function () {
             var i;
@@ -110,9 +118,11 @@
             for (i = 0; i < this.settings.numCircles; i++) {
                 maxR = this.settings.minMaxRad+Math.random()*(this.settings.maxMaxRad-this.settings.minMaxRad);
                 minR = this.settings.minRadFactor*maxR;
+                console.log(maxR + "," + minR)
+                console.log(this.settings.maxMaxRad + "," + this.settings.minMaxRad)
                 
                 //define gradient
-                grad = this.context.createRadialGradient(0,0,minR,0,0,maxR);
+                grad = this.bufferContext.createRadialGradient(0,0,minR,0,0,maxR);
                 var gradientStart = this.hexToRGBA(this.settings.gradientStart, this.settings.smokeOpacity),
                     gradientEnd = this.hexToRGBA(this.settings.gradientEnd, this.settings.smokeOpacity);
 
@@ -128,8 +138,8 @@
                     //fillColor: "rgba(0,0,0,1)",
                     param : 0,
                     changeSpeed : 1/250,
-                    phase : Math.random()*TWO_PI, //the phase to use for a single fractal curve.
-                    globalPhase: Math.random()*TWO_PI //the curve as a whole will rise and fall by a sinusoid.
+                    phase : Math.PI, //the phase to use for a single fractal curve.
+                    globalPhase: Math.PI //the curve as a whole will rise and fall by a sinusoid.
                     };
                 this.circles.push(newCircle);
                 newCircle.pointList1 = this.setLinePoints(this.settings.iterations);
@@ -153,6 +163,17 @@
                 
                 this.drawCount++;
                 
+                if(this.circles[0].centerX + 500 > this.displayWidth) {
+                    var imageData = this.bufferContext.getImageData(0, 0, this.displayWidth, this.displayHeight);
+                    this.fillBackground();
+                    this.bufferContext.putImageData(imageData, -500, 0);
+
+                    for (i = 0; i < this.settings.numCircles; i++) {
+                        c = this.circles[i];
+                        c.centerX = this.displayWidth - 1000;
+                    }
+                }
+
                 for (i = 0; i < this.settings.numCircles; i++) {
                     c = this.circles[i];
                     c.param += c.changeSpeed;
@@ -164,37 +185,37 @@
                     }
                     cosParam = 0.5-0.5*Math.cos(Math.PI*c.param);
                     
-                    this.context.strokeStyle = c.color;
-                    this.context.lineWidth = this.settings.lineWidth;
+                    this.bufferContext.strokeStyle = c.color;
+                    this.bufferContext.lineWidth = this.settings.lineWidth;
                     //context.fillStyle = c.fillColor;
-                    this.context.beginPath();
+                    this.bufferContext.beginPath();
                     point1 = c.pointList1.first;
                     point2 = c.pointList2.first;
                     
                     //slowly rotate
-                    c.phase += 0.0002;
+                    c.phase += 0.002;
                     
                     theta = c.phase;
                     rad = c.minRad + (point1.y + cosParam*(point2.y-point1.y))*(c.maxRad - c.minRad);
                     
                     //move center
                     c.centerX += 0.5;
-                    c.centerY += 0.04;
+                    //c.centerY += 0.04;
                     yOffset = 40*Math.sin(c.globalPhase + this.drawCount/1000*TWO_PI);
                     //stop when off screen
-                    if (c.centerX > this.displayWidth + this.settings.maxMaxRad) {
-                        clearInterval(timer);
-                        timer = null;
-                    }           
+                    // if (c.centerX > this.displayWidth + this.settings.maxMaxRad) {
+                    //     clearInterval(timer);
+                    //     timer = null;
+                    // }           
                     
                     //we are drawing in new position by applying a transform. We are doing this so the gradient will move with the drawing.
-                    this.context.setTransform(xSqueeze,0,0,1,c.centerX,c.centerY+yOffset)
+                    this.bufferContext.setTransform(xSqueeze,0,0,1,c.centerX,c.centerY+yOffset)
                     
                     //Drawing the curve involves stepping through a linked list of points defined by a fractal subdivision process.
                     //It is like drawing a circle, except with varying radius.
                     x0 = xSqueeze*rad*Math.cos(theta);
                     y0 = rad*Math.sin(theta);
-                    this.context.lineTo(x0, y0);
+                    this.bufferContext.lineTo(x0, y0);
                     while (point1.next != null) {
                         point1 = point1.next;
                         point2 = point2.next;
@@ -202,14 +223,16 @@
                         rad = c.minRad + (point1.y + cosParam*(point2.y-point1.y))*(c.maxRad - c.minRad);
                         x0 = xSqueeze*rad*Math.cos(theta);
                         y0 = rad*Math.sin(theta);
-                        this.context.lineTo(x0, y0);
+                        this.bufferContext.lineTo(x0, y0);
                     }
-                    this.context.closePath();
-                    this.context.stroke();
+                    this.bufferContext.closePath();
+                    this.bufferContext.stroke();
                     //context.fill();       
                         
                 }
             }
+            this.context.drawImage(this.backgroundCanvas, 0, 0);
+            this.context.drawImage(this.bufferCanvas, 0, 0);
         },
         setLinePoints: function (iterations) {
             var pointList = {};
@@ -286,7 +309,7 @@
             return result;
         },
         download: function(width, height){
-            this.exportContext.drawImage(this.displayCanvas[0], 0, 0, width, height, 0, 0, width, height);
+            this.exportContext.drawImage(this.displayCanvas, 0, 0, width, height, 0, 0, width, height);
             //we will open a new window with the image contained within:        
             //retrieve canvas image as data URL:
             var dataURL = this.exportCanvas.toDataURL("image/png");
