@@ -68,7 +68,7 @@
             this.backgroundCanvas.height = this.displayHeight;
             this.context = this.displayCanvas.getContext("2d");
             this.bufferContext = this.bufferCanvas.getContext("2d");
-            this.backgroundContext = this.bufferCanvas.getContext("2d");
+            this.backgroundContext = this.backgroundCanvas.getContext("2d");
 
             //off screen canvas used only when exporting image
             this.exportCanvas = document.createElement('canvas');
@@ -165,7 +165,6 @@
                 
                 if(this.circles[0].centerX + 500 > this.displayWidth) {
                     var imageData = this.bufferContext.getImageData(0, 0, this.displayWidth, this.displayHeight);
-                    this.fillBackground();
                     this.bufferContext.putImageData(imageData, -500, 0);
 
                     for (i = 0; i < this.settings.numCircles; i++) {
