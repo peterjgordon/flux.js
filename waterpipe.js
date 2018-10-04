@@ -58,8 +58,8 @@
             this.displayCanvas = this.$element.find('canvas')[0];
             this.bufferCanvas = document.createElement("canvas");
             this.backgroundCanvas = document.createElement("canvas");
-            this.displayWidth = this.$element[0].offsetWidth + 500;
-            this.displayHeight = this.$element[0].offsetHeight + 500;
+            this.displayWidth = this.$element[0].offsetWidth + 1000;
+            this.displayHeight = this.$element[0].offsetHeight + 1000;
             this.displayCanvas.width = this.displayWidth;
             this.displayCanvas.height = this.displayHeight;
             this.bufferCanvas.width = this.displayWidth;
@@ -78,6 +78,7 @@
         },
         generate: function () {
             this.drawCount = 0;
+            this.scrollOffset = -500;
             this.bufferContext.setTransform(1,0,0,1,0,0);
             this.bufferContext.clearRect(0,0,this.displayWidth,this.displayHeight);
             this.fillBackground();
@@ -162,12 +163,16 @@
             for (j = 0; j < this.settings.drawsPerFrame; j++) {
                 
                 this.drawCount++;
+                if (this.scrollOffset > -1000) this.scrollOffset -= 0.5;
+                console.log(this.scrollOffset);
                 
                 if(this.circles[0].centerX + 500 > this.displayWidth) {
                     var imageData = this.bufferContext.getImageData(0, 0, this.displayWidth, this.displayHeight);
                     this.bufferContext.setTransform(1, 0, 0, 1, 0, 0);
                     this.bufferContext.clearRect(0, 0, this.bufferCanvas.width, this.bufferCanvas.height);
                     this.bufferContext.putImageData(imageData, -500, 0);
+
+                    this.scrollOffset = -500;
 
                     for (i = 0; i < this.settings.numCircles; i++) {
                         c = this.circles[i];
@@ -233,7 +238,7 @@
                 }
             }
             this.context.drawImage(this.backgroundCanvas, 0, 0);
-            this.context.drawImage(this.bufferCanvas, 0, 0);
+            this.context.drawImage(this.bufferCanvas, this.scrollOffset, -400);
         },
         setLinePoints: function (iterations) {
             var pointList = {};
