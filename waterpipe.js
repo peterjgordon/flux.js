@@ -165,6 +165,8 @@
                 
                 if(this.circles[0].centerX + 500 > this.displayWidth) {
                     var imageData = this.bufferContext.getImageData(0, 0, this.displayWidth, this.displayHeight);
+                    this.bufferContext.setTransform(1, 0, 0, 1, 0, 0);
+                    this.bufferContext.clearRect(0, 0, this.bufferCanvas.width, this.bufferCanvas.height);
                     this.bufferContext.putImageData(imageData, -500, 0);
 
                     for (i = 0; i < this.settings.numCircles; i++) {
