@@ -25,6 +25,8 @@
             drawsPerFrame: 10,
             lineWidth: 2,
             speed: 15,
+            //Interaction
+            mousePower: 10,
             //Background
             bgColorInner: "#ffffff",
             bgColorOuter: "#666666",
@@ -79,6 +81,12 @@
 
             // preload area, offscreen to left and right
             this.preloadSize = 500;
+
+            // track mouse pos
+            this.mousePos = {x: $(document).width()/2, y: $(document).height()/2};
+            $(window).on('mousemove touchmove', function(event) {
+                inst.mousePos = {x: event.clientX, y: event.clientY};
+            })
 
             //off screen canvas used only when exporting image
             this.exportCanvas = document.createElement('canvas');
@@ -214,9 +222,11 @@
                     theta = c.phase;
                     rad = c.minRad + (point1.y + cosParam*(point2.y-point1.y))*(c.maxRad - c.minRad);
                     
-                    //move center
+                    // MOVE CENTERS
                     c.centerX += 0.5;
-                    //c.centerY += 0.04; // no change in Y to keep it on-screen infinitely
+                    // Mouse interaction can control Y co-ordinate
+                    if (this.mousePos.y > c.centerY) c.centerY += this.settings.mousePower/100;
+                    else if (this.mousePos.y < c.centerY) c.centerY -= this.settings.mousePower/100;
                     yOffset = 40*Math.sin(c.globalPhase + this.drawCount/1000*TWO_PI);
                     
                     //we are drawing in new position by applying a transform. We are doing this so the gradient will move with the drawing.
