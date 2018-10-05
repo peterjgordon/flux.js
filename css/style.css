@@ -12,11 +12,15 @@ body {
   font-size: 14px;
 }
 .sidebar-wrapper {
+  display: none;
+  flex-direction: column;
+  flex-wrap: nowrap;
   padding: 0;
   margin: 10px;
   position: absolute;
   top: 0;
   left: 0;
+  bottom: 0;
   width: 200px;
   background: #fff;
   box-sizing: border-box;
@@ -83,9 +87,8 @@ body {
   font-size: 0.8em;
 }
 .sidebar-wrapper .intro {
-  position: absolute;
+  flex-shrink: 0;
   padding-bottom: 5px;
-  top: 0;
   width: 100%;
   background: #2c3e50;
   z-index: 8888;
@@ -114,9 +117,8 @@ body {
   text-align: right;
 }
 .sidebar-wrapper .generator-form-wrap {
-  margin-top: 114px;
-  margin-bottom: 166px;
-  overflow: hidden;
+  flex-grow: 1;
+  overflow: auto;
   box-sizing: border-box;
   -moz-box-sizing: border-box;
 }
@@ -126,9 +128,8 @@ body {
   margin-bottom: 5px;
 }
 .sidebar-wrapper .buttons-wrap {
-  position: absolute;
+  flex-shrink: 0;
   width: 100%;
-  bottom: 0;
   padding: 10px 5px;
   background: #2c3e50;
   box-sizing: border-box;

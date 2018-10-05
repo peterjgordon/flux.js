@@ -338,14 +338,12 @@
             var exportImage = imageWindow.document.getElementById("exportImage");
             exportImage.src = dataURL;
         },
-        toggleCapture: function() {
-            if ($(".btn-record").text() == "Start Recording") {
+        toggleCapture: function(enable) {
+            if (enable) {
                 recordedChunks = [];
                 this.mediaRecorder.start();
-                $(".btn-record").text("Stop Recording");
             } else {
                 this.mediaRecorder.stop();
-                $(".btn-record").text("Start Recording");
             }
         },
         captureDataAvailable: function(event) {
