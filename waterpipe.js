@@ -24,7 +24,7 @@
             iterations: 8,
             drawsPerFrame: 10,
             lineWidth: 2,
-            speed: 1,
+            speed: 15,
             //Background
             bgColorInner: "#ffffff",
             bgColorOuter: "#666666",
@@ -45,12 +45,12 @@
 
     Smoke.prototype = {
         init: function () {
-            this.initSettings();
             this.initCanvas();
+            this.initSettings();
             this.generate();
         },
         initSettings: function () {
-            var radius = this.$element.height()*1/5;
+            var radius = this.$element.height()/5;
             if(this.settings.maxMaxRad==='auto') this.settings.maxMaxRad = radius;
             if(this.settings.minMaxRad==='auto') this.settings.minMaxRad = radius;
         },
@@ -77,8 +77,10 @@
             this.exportContext = this.exportCanvas.getContext("2d");
         },
         generate: function () {
+            console.log(this.settings);
+
             this.drawCount = 0;
-            this.scrollOffset = -500;
+            this.scrollOffset = 950;
             this.bufferContext.setTransform(1,0,0,1,0,0);
             this.bufferContext.clearRect(0,0,this.displayWidth,this.displayHeight);
             this.fillBackground();
@@ -164,7 +166,6 @@
                 
                 this.drawCount++;
                 if (this.scrollOffset > -1000) this.scrollOffset -= 0.5;
-                console.log(this.scrollOffset);
                 
                 if(this.circles[0].centerX + 500 > this.displayWidth) {
                     var imageData = this.bufferContext.getImageData(0, 0, this.displayWidth, this.displayHeight);
