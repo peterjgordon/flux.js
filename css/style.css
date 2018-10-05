@@ -171,6 +171,9 @@ body {
 .btn-download {
   background: #16a085;
 }
+.btn-record {
+  background: #a01626;
+}
 input.color-picker {
   border-right: 30px solid green;
   width: 120px;

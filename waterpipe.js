@@ -70,6 +70,10 @@
             this.bufferContext = this.bufferCanvas.getContext("2d");
             this.backgroundContext = this.backgroundCanvas.getContext("2d");
 
+            // recording stream
+            this.stream = this.displayCanvas.captureStream(25);
+            console.log("Stream started: ", this.stream);
+
             //off screen canvas used only when exporting image
             this.exportCanvas = document.createElement('canvas');
             this.exportCanvas.width = this.displayWidth;
@@ -333,6 +337,46 @@
             //copy the image into the empty img in the newly opened window:
             var exportImage = imageWindow.document.getElementById("exportImage");
             exportImage.src = dataURL;
+        },
+        toggleCapture: function() {
+            if (this.recording) {
+                this.finishCapture();
+            } else {
+                this.capture();
+            }
+        },
+        capture: function() {
+            var options = {mimeType: 'video/webm'};
+            this.recording = true;
+
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(this.stream, options);
+            mediaRecorder.ondataavailable = this.captureDataAvailable;
+            mediaRecorder.start(100);
+        },
+        captureDataAvailable: function(event) {
+            console.log('data available: ');
+            console.log(event.data);
+            if(event.data.size > 0) {
+                console.log('writing');
+                recordedChunks.push(event.data);
+            }
+        },
+        finishCapture: function() {
+            mediaRecorder.stop();
+            console.log(recordedChunks.length);
+            var blob = new Blob(recordedChunks, {type: 'video/webm'});
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'Waterpipe-' + Math.round(new Date().getTime()/1000) + '.webm';
+            document.body.appendChild(a);
+            a.click();
+            //window.URL.revokeObjectURL(url);
+            //document.body.removeChild(a);
+
+            this.recording = false;
         }
     };
 
