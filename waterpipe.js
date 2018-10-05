@@ -59,7 +59,7 @@
             this.bufferCanvas = document.createElement("canvas");
             this.backgroundCanvas = document.createElement("canvas");
             this.displayWidth = this.$element[0].offsetWidth + 1000;
-            this.displayHeight = this.$element[0].offsetHeight + 1000;
+            this.displayHeight = this.$element[0].offsetHeight;
             this.displayCanvas.width = this.displayWidth;
             this.displayCanvas.height = this.displayHeight;
             this.bufferCanvas.width = this.displayWidth;
@@ -71,8 +71,11 @@
             this.backgroundContext = this.backgroundCanvas.getContext("2d");
 
             // recording stream
-            this.stream = this.displayCanvas.captureStream(25);
+            this.stream = this.displayCanvas.captureStream(30);
             console.log("Stream started: ", this.stream);
+            this.mediaRecorder = new MediaRecorder(this.stream, {mimeType: 'video/webm'});
+            this.mediaRecorder.ondataavailable = this.captureDataAvailable;
+            this.mediaRecorder.onstop = this.captureStopped;
 
             // preload area, offscreen to left and right
             this.preloadSize = 500;
@@ -213,13 +216,8 @@
                     
                     //move center
                     c.centerX += 0.5;
-                    //c.centerY += 0.04;
+                    //c.centerY += 0.04; // no change in Y to keep it on-screen infinitely
                     yOffset = 40*Math.sin(c.globalPhase + this.drawCount/1000*TWO_PI);
-                    //stop when off screen
-                    // if (c.centerX > this.displayWidth + this.settings.maxMaxRad) {
-                    //     clearInterval(timer);
-                    //     timer = null;
-                    // }           
                     
                     //we are drawing in new position by applying a transform. We are doing this so the gradient will move with the drawing.
                     this.bufferContext.setTransform(xSqueeze,0,0,1,c.centerX,c.centerY+yOffset)
@@ -245,7 +243,7 @@
                 }
             }
             this.context.drawImage(this.backgroundCanvas, 0, 0);
-            this.context.drawImage(this.bufferCanvas, this.scrollOffset, -400);
+            this.context.drawImage(this.bufferCanvas, this.scrollOffset, 0);
         },
         setLinePoints: function (iterations) {
             var pointList = {};
@@ -341,31 +339,22 @@
             exportImage.src = dataURL;
         },
         toggleCapture: function() {
-            if (this.recording) {
-                this.finishCapture();
+            if ($(".btn-record").text() == "Start Recording") {
+                recordedChunks = [];
+                this.mediaRecorder.start();
+                $(".btn-record").text("Stop Recording");
             } else {
-                this.capture();
+                this.mediaRecorder.stop();
+                $(".btn-record").text("Start Recording");
             }
         },
-        capture: function() {
-            var options = {mimeType: 'video/webm'};
-            this.recording = true;
-
-            recordedChunks = [];
-            mediaRecorder = new MediaRecorder(this.stream, options);
-            mediaRecorder.ondataavailable = this.captureDataAvailable;
-            mediaRecorder.start(100);
-        },
         captureDataAvailable: function(event) {
-            console.log('data available: ');
             console.log(event.data);
             if(event.data.size > 0) {
-                console.log('writing');
                 recordedChunks.push(event.data);
             }
         },
-        finishCapture: function() {
-            mediaRecorder.stop();
+        captureStopped: function(event) {
             console.log(recordedChunks.length);
             var blob = new Blob(recordedChunks, {type: 'video/webm'});
             var url = window.URL.createObjectURL(blob);
@@ -375,10 +364,8 @@
             a.download = 'Waterpipe-' + Math.round(new Date().getTime()/1000) + '.webm';
             document.body.appendChild(a);
             a.click();
-            //window.URL.revokeObjectURL(url);
-            //document.body.removeChild(a);
-
-            this.recording = false;
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
         }
     };
 
