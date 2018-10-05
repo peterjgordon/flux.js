@@ -26,7 +26,7 @@
             lineWidth: 2,
             speed: 15,
             //Interaction
-            mousePower: 10,
+            mousePower: 20,
             //Background
             bgColorInner: "#ffffff",
             bgColorOuter: "#666666",
@@ -183,7 +183,7 @@
             for (j = 0; j < this.settings.drawsPerFrame; j++) {
                 
                 this.drawCount++;
-                if (this.scrollOffset > -this.preloadSize*2) this.scrollOffset -= 0.5;
+                if (this.scrollOffset > -this.preloadSize*2) this.scrollOffset -= this.settings.mousePower/50;
                 
                 if(this.circles[0].centerX + this.preloadSize > this.displayWidth) {
                     var imageData = this.bufferContext.getImageData(0, 0, this.displayWidth, this.displayHeight);
@@ -223,10 +223,13 @@
                     rad = c.minRad + (point1.y + cosParam*(point2.y-point1.y))*(c.maxRad - c.minRad);
                     
                     // MOVE CENTERS
-                    c.centerX += 0.5;
-                    // Mouse interaction can control Y co-ordinate
-                    if (this.mousePos.y > c.centerY) c.centerY += this.settings.mousePower/100;
-                    else if (this.mousePos.y < c.centerY) c.centerY -= this.settings.mousePower/100;
+                    // X
+                    if (this.mousePos.x >= c.centerX - this.preloadSize*2) c.centerX += this.settings.mousePower/50;
+                    else c.centerX -= this.settings.mousePower/50;
+
+                    // Y
+                    if (this.mousePos.y >= c.centerY) c.centerY += this.settings.mousePower/50;
+                    else c.centerY -= this.settings.mousePower/50;
                     yOffset = 40*Math.sin(c.globalPhase + this.drawCount/1000*TWO_PI);
                     
                     //we are drawing in new position by applying a transform. We are doing this so the gradient will move with the drawing.
