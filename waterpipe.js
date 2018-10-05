@@ -74,6 +74,9 @@
             this.stream = this.displayCanvas.captureStream(25);
             console.log("Stream started: ", this.stream);
 
+            // preload area, offscreen to left and right
+            this.preloadSize = 500;
+
             //off screen canvas used only when exporting image
             this.exportCanvas = document.createElement('canvas');
             this.exportCanvas.width = this.displayWidth;
@@ -84,7 +87,7 @@
             console.log(this.settings);
 
             this.drawCount = 0;
-            this.scrollOffset = 950;
+            this.scrollOffset = -this.preloadSize*2;
             this.bufferContext.setTransform(1,0,0,1,0,0);
             this.bufferContext.clearRect(0,0,this.displayWidth,this.displayHeight);
             this.fillBackground();
@@ -137,7 +140,7 @@
                 grad.addColorStop(0,gradientEnd);
                 
                 var newCircle = {
-                    centerX: -maxR,
+                    centerX: -maxR + this.preloadSize*2,
                     centerY: this.displayHeight/2-50,
                     maxRad : maxR,
                     minRad : minR,
@@ -169,19 +172,18 @@
             for (j = 0; j < this.settings.drawsPerFrame; j++) {
                 
                 this.drawCount++;
-                if (this.scrollOffset > -1000) this.scrollOffset -= 0.5;
+                if (this.scrollOffset > -this.preloadSize*2) this.scrollOffset -= 0.5;
                 
-                if(this.circles[0].centerX + 500 > this.displayWidth) {
+                if(this.circles[0].centerX + this.preloadSize > this.displayWidth) {
                     var imageData = this.bufferContext.getImageData(0, 0, this.displayWidth, this.displayHeight);
                     this.bufferContext.setTransform(1, 0, 0, 1, 0, 0);
                     this.bufferContext.clearRect(0, 0, this.bufferCanvas.width, this.bufferCanvas.height);
-                    this.bufferContext.putImageData(imageData, -500, 0);
-
-                    this.scrollOffset = -500;
+                    this.bufferContext.putImageData(imageData, -this.preloadSize, 0);
+                    this.scrollOffset = -this.preloadSize;
 
                     for (i = 0; i < this.settings.numCircles; i++) {
                         c = this.circles[i];
-                        c.centerX = this.displayWidth - 1000;
+                        c.centerX = this.displayWidth - this.preloadSize*2;
                     }
                 }
 
