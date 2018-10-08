@@ -83,9 +83,15 @@
             this.preloadSize = 500;
 
             // track mouse pos
-            this.mousePos = {x: $(document).width()/2, y: $(document).height()/2};
-            $(window).on('mousemove touchmove', function(event) {
+            $(window).on('mousemove', function(event) {
+                if(inst.settings.mousePower == 0) return;
+
                 inst.mousePos = {x: event.clientX, y: event.clientY};
+            });
+            $(window).on('touchmove', function(event) {
+                if(inst.settings.mousePower == 0) return;
+
+                inst.mousePos = {x: event.originalEvent.touches[0].clientX, y: event.originalEvent.touches[0].clientY};
             })
 
             //off screen canvas used only when exporting image
@@ -104,6 +110,9 @@
             this.fillBackground();
             
             this.setCircles();
+
+            // reset mouse pos
+            this.mousePos = {x: $(document).width(), y: $(document).height()/2};
             
             if(timer) {clearInterval(timer);}
             timer = setInterval(function(){inst.onTimer()},inst.settings.speed);
@@ -183,7 +192,7 @@
             for (j = 0; j < this.settings.drawsPerFrame; j++) {
                 
                 this.drawCount++;
-                if (this.scrollOffset > -this.preloadSize*2) this.scrollOffset -= this.settings.mousePower/50;
+                if (this.scrollOffset > -this.preloadSize*2) this.scrollOffset -= (this.settings.mousePower || this._defaults.mousePower)/50;
                 
                 if(this.circles[0].centerX + this.preloadSize > this.displayWidth) {
                     var imageData = this.bufferContext.getImageData(0, 0, this.displayWidth, this.displayHeight);
@@ -224,12 +233,12 @@
                     
                     // MOVE CENTERS
                     // X
-                    if (this.mousePos.x >= c.centerX - this.preloadSize*2) c.centerX += this.settings.mousePower/50;
-                    else c.centerX -= this.settings.mousePower/50;
+                    if (this.mousePos.x >= c.centerX - this.preloadSize*2) c.centerX += (this.settings.mousePower || this._defaults.mousePower)/50;
+                    else c.centerX -= (this.settings.mousePower || this._defaults.mousePower)/50;
 
                     // Y
-                    if (this.mousePos.y >= c.centerY) c.centerY += this.settings.mousePower/50;
-                    else c.centerY -= this.settings.mousePower/50;
+                    if (this.mousePos.y >= c.centerY) c.centerY += (this.settings.mousePower || this._defaults.mousePower)/50;
+                    else c.centerY -= (this.settings.mousePower || this._defaults.mousePower)/50;
                     yOffset = 40*Math.sin(c.globalPhase + this.drawCount/1000*TWO_PI);
                     
                     //we are drawing in new position by applying a transform. We are doing this so the gradient will move with the drawing.
@@ -321,6 +330,7 @@
             return pointList;       
         },
         setOption: function (optionName, optionValue) {
+            if(!isNaN(optionValue)) optionValue = parseFloat(optionValue);
             this.settings[optionName] = optionValue;
         },
         hexToRGBA: function (hex, opacity) {
