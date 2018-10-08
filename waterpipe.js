@@ -33,7 +33,7 @@
         };
 
     var TWO_PI = 2*Math.PI;
-    var timer;
+    var timer, fadeTimer;
     var inst;
     function Smoke ( element, options ) {
         this.element = element;
@@ -57,19 +57,28 @@
             if(this.settings.minMaxRad==='auto') this.settings.minMaxRad = radius;
         },
         initCanvas: function () {
+            // preload area, offscreen to left and right
+            this.preloadSize = 500;
+
             this.displayCanvas = this.$element.find('canvas')[0];
             this.bufferCanvas = document.createElement("canvas");
+            this.fadeCanvas = document.createElement("canvas");
             this.backgroundCanvas = document.createElement("canvas");
-            this.displayWidth = this.$element[0].offsetWidth + 1000;
+
+            this.displayWidth = this.$element[0].offsetWidth + this.preloadSize*2;
             this.displayHeight = this.$element[0].offsetHeight;
             this.displayCanvas.width = this.displayWidth;
             this.displayCanvas.height = this.displayHeight;
             this.bufferCanvas.width = this.displayWidth;
             this.bufferCanvas.height = this.displayHeight;
+            this.fadeCanvas.width = this.displayWidth;
+            this.fadeCanvas.height = this.displayHeight;
             this.backgroundCanvas.width = this.displayWidth;
             this.backgroundCanvas.height = this.displayHeight;
+
             this.context = this.displayCanvas.getContext("2d");
             this.bufferContext = this.bufferCanvas.getContext("2d");
+            this.fadeContext = this.fadeCanvas.getContext("2d");
             this.backgroundContext = this.backgroundCanvas.getContext("2d");
 
             // recording stream
@@ -79,11 +88,16 @@
             this.mediaRecorder.ondataavailable = this.captureDataAvailable;
             this.mediaRecorder.onstop = this.captureStopped;
 
-            // preload area, offscreen to left and right
-            this.preloadSize = 500;
-
             // track mouse pos
+            $(window).on('mousedown', function(event) {
+                inst.drawing = true;
+                inst.path = [];
+                inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
+            });
             $(window).on('mousemove', function(event) {
+                if(inst.drawing) {
+                    inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
+                }
                 if(inst.settings.mousePower == 0) return;
 
                 inst.mousePos = {x: event.clientX, y: event.clientY};
@@ -93,10 +107,15 @@
 
                 inst.mousePos = {x: event.originalEvent.touches[0].clientX, y: event.originalEvent.touches[0].clientY};
             });
+            $(window).on('mouseup', function(event) {
+                inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
+                inst.drawing = false;
+                console.log(inst.path);
+            });
 
             // toggle movement
             $("#wavybg-wrapper").on('click', function(event) {
-                inst.toggleMovement();
+                //TODO: inst.toggleMovement();
             });
 
             //off screen canvas used only when exporting image
@@ -110,8 +129,7 @@
 
             this.drawCount = 0;
             this.scrollOffset = -this.preloadSize*2;
-            this.bufferContext.setTransform(1,0,0,1,0,0);
-            this.bufferContext.clearRect(0,0,this.displayWidth,this.displayHeight);
+            this.cleanCanvas(this.bufferContext);
             this.fillBackground();
             
             this.setCircles();
@@ -119,8 +137,17 @@
             // reset mouse pos
             this.mousePos = {x: $(document).width(), y: $(document).height()/2};
 
+            // reset path drawing
+            this.drawing = false;
+            this.path = null;
+            this.replayLastPointIndex = null;
+
             // start movement
             this.toggleMovement(true);
+        },
+        cleanCanvas: function(context) {
+            context.setTransform(1,0,0,1,0,0);
+            context.clearRect(0,0,this.displayWidth,this.displayHeight);
         },
         fillBackground: function () {
             var outerRad = Math.sqrt(this.displayWidth*this.displayWidth + this.displayHeight*this.displayHeight)/2;
@@ -201,6 +228,18 @@
                 }, inst.settings.speed);
             }
         },
+        fadeOverTime: function() {
+            this.fadeToBackground(1);
+
+            if (fadeTimer == null) fadeTimer = setInterval(this.fadeToBackground, 50);
+        },
+        fadeToBackground: function (alpha) {
+            inst.fadeContext.globalAlpha = alpha || 0.05;
+            // inst.bufferContext.fillStyle = "#FFFFFF";
+            // inst.bufferContext.fillRect(0, 0, inst.displayWidth, inst.displayHeight);
+            inst.fadeContext.drawImage(inst.backgroundCanvas, 0, 0);
+            inst.fadeContext.globalAlpha = 1;
+        },
         onTimer: function () {
             var i,j;
             var c;
@@ -217,18 +256,21 @@
             for (j = 0; j < this.settings.drawsPerFrame; j++) {
                 
                 this.drawCount++;
-                if (this.scrollOffset > -this.preloadSize*2) this.scrollOffset -= (this.settings.mousePower || this._defaults.mousePower)/50;
-                
-                if(this.circles[0].centerX + this.preloadSize > this.displayWidth) {
-                    var imageData = this.bufferContext.getImageData(0, 0, this.displayWidth, this.displayHeight);
-                    this.bufferContext.setTransform(1, 0, 0, 1, 0, 0);
-                    this.bufferContext.clearRect(0, 0, this.bufferCanvas.width, this.bufferCanvas.height);
-                    this.bufferContext.putImageData(imageData, -this.preloadSize, 0);
-                    this.scrollOffset = -this.preloadSize;
+                if (this.replayLastPointIndex == null) {
+                    // CONTINUOUS SCROLLING
+                    // (disabled in replay mode)
+                    if (this.scrollOffset > -this.preloadSize*2) this.scrollOffset -= (this.settings.mousePower || this._defaults.mousePower)/50;
+                    
+                    if (this.circles[0].centerX + this.preloadSize > this.displayWidth) {
+                        var imageData = this.bufferContext.getImageData(0, 0, this.displayWidth, this.displayHeight);
+                        this.cleanCanvas(this.bufferContext);
+                        this.bufferContext.putImageData(imageData, -this.preloadSize, 0);
+                        this.scrollOffset = -this.preloadSize;
 
-                    for (i = 0; i < this.settings.numCircles; i++) {
-                        c = this.circles[i];
-                        c.centerX = this.displayWidth - this.preloadSize*2;
+                        for (i = 0; i < this.settings.numCircles; i++) {
+                            c = this.circles[i];
+                            c.centerX = this.displayWidth - this.preloadSize*2;
+                        }
                     }
                 }
 
@@ -257,13 +299,48 @@
                     rad = c.minRad + (point1.y + cosParam*(point2.y-point1.y))*(c.maxRad - c.minRad);
                     
                     // MOVE CENTERS
-                    // X
-                    if (this.mousePos.x >= c.centerX - this.preloadSize*2) c.centerX += (this.settings.mousePower || this._defaults.mousePower)/50;
-                    else c.centerX -= (this.settings.mousePower || this._defaults.mousePower)/50;
+                    // REPLAY MODE
+                    if (this.path != null && this.path.length > 0 && !this.drawing) { // TODO flag for replay mode
+                        if (this.replayLastPointIndex == null) {
+                            this.cleanCanvas(this.bufferContext);
+                            this.replayLastPointIndex = 0;
+                            c.centerX = this.path[0].x + this.preloadSize*2;
+                            c.centerY = this.path[0].y;
+                        }
+                        replayLastPoint = this.path[this.replayLastPointIndex];
+                        //console.log(c.centerX - this.preloadSize*2, replayLastPoint.x, c.centerY, replayLastPoint.y);
+                        actualX = Math.round(c.centerX + this.scrollOffset);
+                        if(actualX == replayLastPoint.x && Math.round(c.centerY) == replayLastPoint.y) {
+                            // start moving to next point
+                            //console.log("Next point:", this.replayLastPointIndex);
+                            this.replayLastPointIndex++;
+                            if(this.replayLastPointIndex >= this.path.length) {
+                                this.replayLastPointIndex = 0;
 
-                    // Y
-                    if (this.mousePos.y >= c.centerY) c.centerY += (this.settings.mousePower || this._defaults.mousePower)/50;
-                    else c.centerY -= (this.settings.mousePower || this._defaults.mousePower)/50;
+                                this.cleanCanvas(this.fadeContext);
+                                this.fadeOverTime();
+                                this.fadeContext.globalAlpha = 1;
+                                this.fadeContext.drawImage(this.bufferCanvas, this.scrollOffset, 0);
+                                this.cleanCanvas(this.bufferContext);
+                            }
+                        } else {
+                            // X
+                            if(replayLastPoint.x > actualX) c.centerX += 0.5;
+                            else if(replayLastPoint.x < actualX) c.centerX -= 0.5;
+
+                            // Y
+                            if(c.centerY < replayLastPoint.y) c.centerY += 0.5;
+                            else if(c.centerY > replayLastPoint.y) c.centerY -= 0.5;
+                        }
+                    } else {
+                        // X
+                        if (this.mousePos.x >= c.centerX - this.preloadSize*2) c.centerX += (this.settings.mousePower || this._defaults.mousePower)/50;
+                        else c.centerX -= (this.settings.mousePower || this._defaults.mousePower)/50;
+
+                        // Y
+                        if (this.mousePos.y >= c.centerY) c.centerY += (this.settings.mousePower || this._defaults.mousePower)/50;
+                        else c.centerY -= (this.settings.mousePower || this._defaults.mousePower)/50;
+                    }
                     yOffset = 40*Math.sin(c.globalPhase + this.drawCount/1000*TWO_PI);
                     
                     //we are drawing in new position by applying a transform. We are doing this so the gradient will move with the drawing.
@@ -289,6 +366,7 @@
                 }
             }
             this.context.drawImage(this.backgroundCanvas, 0, 0);
+            if(this.replayLastPointIndex != null) this.context.drawImage(this.fadeCanvas, 0, 0);
             this.context.drawImage(this.bufferCanvas, this.scrollOffset, 0);
         },
         setLinePoints: function (iterations) {
