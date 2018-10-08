@@ -92,7 +92,12 @@
                 if(inst.settings.mousePower == 0) return;
 
                 inst.mousePos = {x: event.originalEvent.touches[0].clientX, y: event.originalEvent.touches[0].clientY};
-            })
+            });
+
+            // toggle movement
+            $("#wavybg-wrapper").on('click', function(event) {
+                inst.toggleMovement();
+            });
 
             //off screen canvas used only when exporting image
             this.exportCanvas = document.createElement('canvas');
@@ -113,10 +118,9 @@
 
             // reset mouse pos
             this.mousePos = {x: $(document).width(), y: $(document).height()/2};
-            
-            if(timer) {clearInterval(timer);}
-            timer = setInterval(function(){inst.onTimer()},inst.settings.speed);
-            
+
+            // start movement
+            this.toggleMovement(true);
         },
         fillBackground: function () {
             var outerRad = Math.sqrt(this.displayWidth*this.displayWidth + this.displayHeight*this.displayHeight)/2;
@@ -174,6 +178,27 @@
                 this.circles.push(newCircle);
                 newCircle.pointList1 = this.setLinePoints(this.settings.iterations);
                 newCircle.pointList2 = this.setLinePoints(this.settings.iterations);
+            }
+        },
+        getCirclePoint: function(angle) {
+            var centerX = this.displayWidth/2;
+            var centerY = this.displayHeight/2;
+            var radius = Math.min(centerX, centerY)/5*4;
+
+            var x = centerX + radius * Math.cos(-angle * Math.PI/180);
+            var y = centerY + radius * Math.sin(-angle * Math.PI/180);
+            return {x, y}
+        },
+        toggleMovement: function(forceEnable) {
+            var hadNoTimer = timer == null;
+            if(timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            if(forceEnable || hadNoTimer) {
+                timer = setInterval(function() {
+                    inst.onTimer();
+                }, inst.settings.speed);
             }
         },
         onTimer: function () {
@@ -242,7 +267,7 @@
                     yOffset = 40*Math.sin(c.globalPhase + this.drawCount/1000*TWO_PI);
                     
                     //we are drawing in new position by applying a transform. We are doing this so the gradient will move with the drawing.
-                    this.bufferContext.setTransform(xSqueeze,0,0,1,c.centerX,c.centerY+yOffset)
+                    this.bufferContext.setTransform(xSqueeze,0,0,1,c.centerX,c.centerY+yOffset);
                     
                     //Drawing the curve involves stepping through a linked list of points defined by a fractal subdivision process.
                     //It is like drawing a circle, except with varying radius.
@@ -260,8 +285,7 @@
                     }
                     this.bufferContext.closePath();
                     this.bufferContext.stroke();
-                    //context.fill();       
-                        
+                    //context.fill();
                 }
             }
             this.context.drawImage(this.backgroundCanvas, 0, 0);
@@ -270,7 +294,7 @@
         setLinePoints: function (iterations) {
             var pointList = {};
             pointList.first = {x:0, y:1};
-            var lastPoint = {x:1, y:1}
+            var lastPoint = {x:1, y:1};
             var minY = 1;
             var maxY = 1;
             var point;
