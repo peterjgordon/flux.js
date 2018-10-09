@@ -63,7 +63,9 @@
             this.displayCanvas = this.$element.find('canvas')[0];
             this.bufferCanvas = document.createElement("canvas");
             this.fadeCanvas = document.createElement("canvas");
+            this.fadeBackgroundCanvas = document.createElement("canvas");
             this.backgroundCanvas = document.createElement("canvas");
+            this.backgroundBufferCanvas = document.createElement("canvas");
 
             this.displayWidth = this.$element[0].offsetWidth + this.preloadSize*2;
             this.displayHeight = this.$element[0].offsetHeight;
@@ -73,13 +75,19 @@
             this.bufferCanvas.height = this.displayHeight;
             this.fadeCanvas.width = this.displayWidth;
             this.fadeCanvas.height = this.displayHeight;
+            this.fadeBackgroundCanvas.width = this.displayWidth;
+            this.fadeBackgroundCanvas.height = this.displayHeight;
             this.backgroundCanvas.width = this.displayWidth;
             this.backgroundCanvas.height = this.displayHeight;
+            this.backgroundBufferCanvas.width = this.displayWidth;
+            this.backgroundBufferCanvas.height = this.displayHeight;
 
             this.context = this.displayCanvas.getContext("2d");
             this.bufferContext = this.bufferCanvas.getContext("2d");
             this.fadeContext = this.fadeCanvas.getContext("2d");
+            this.fadeBackgroundContext = this.fadeBackgroundCanvas.getContext("2d");
             this.backgroundContext = this.backgroundCanvas.getContext("2d");
+            this.backgroundBufferContext = this.backgroundBufferCanvas.getContext("2d");
 
             // recording stream
             this.stream = this.displayCanvas.captureStream(30);
@@ -89,12 +97,13 @@
             this.mediaRecorder.onstop = this.captureStopped;
 
             // track mouse pos
-            $(window).on('mousedown', function(event) {
+            $("#wavybg-wrapper").on('mousedown', function(event) {
                 inst.drawing = true;
                 inst.path = [];
+                inst.replayLastPointIndex = null;
                 inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
             });
-            $(window).on('mousemove', function(event) {
+            $("#wavybg-wrapper").on('mousemove', function(event) {
                 if(inst.drawing) {
                     inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
                 }
@@ -102,12 +111,12 @@
 
                 inst.mousePos = {x: event.clientX, y: event.clientY};
             });
-            $(window).on('touchmove', function(event) {
+            $("#wavybg-wrapper").on('touchmove', function(event) {
                 if(inst.settings.mousePower == 0) return;
 
                 inst.mousePos = {x: event.originalEvent.touches[0].clientX, y: event.originalEvent.touches[0].clientY};
             });
-            $(window).on('mouseup', function(event) {
+            $("#wavybg-wrapper").on('mouseup', function(event) {
                 inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
                 inst.drawing = false;
                 console.log(inst.path);
@@ -155,18 +164,19 @@
 
             var hex = this.settings.bgColorInner.replace('#','');
 
-            var r0 = parseInt(hex.substring(0,2), 16), 
-                g0 = parseInt(hex.substring(2,4), 16), 
+            var r0 = parseInt(hex.substring(0,2), 16),
+                g0 = parseInt(hex.substring(2,4), 16),
                 b0 = parseInt(hex.substring(4,6), 16);
 
             hex = this.settings.bgColorOuter.replace('#','');
-            var r1 = parseInt(hex.substring(0,2), 16), 
-                g1 = parseInt(hex.substring(2,4), 16), 
+            var r1 = parseInt(hex.substring(0,2), 16),
+                g1 = parseInt(hex.substring(2,4), 16),
                 b1 = parseInt(hex.substring(4,6), 16);
 
             this.niceGradient.addColorStop(0,r0,g0,b0);
-            this.niceGradient.addColorStop(1,r1,g1,b1);     
+            this.niceGradient.addColorStop(1,r1,g1,b1);
             this.niceGradient.fillRect(this.backgroundContext,0,0,this.displayWidth,this.displayHeight);
+            this.niceGradient.fillRect(this.backgroundBufferContext,0,0,this.displayWidth,this.displayHeight);
         },
         setCircles: function () {
             var i;
@@ -229,16 +239,14 @@
             }
         },
         fadeOverTime: function() {
-            this.fadeToBackground(1);
+            // this.fadeToBackground(1);
+            inst.cleanCanvas(inst.fadeBackgroundContext);
+            inst.fadeBackgroundContext.drawImage(inst.backgroundBufferCanvas, 0, 0);
+            inst.fadeAlpha = 0;
 
-            if (fadeTimer == null) fadeTimer = setInterval(this.fadeToBackground, 50);
-        },
-        fadeToBackground: function (alpha) {
-            inst.fadeContext.globalAlpha = alpha || 0.05;
-            // inst.bufferContext.fillStyle = "#FFFFFF";
-            // inst.bufferContext.fillRect(0, 0, inst.displayWidth, inst.displayHeight);
-            inst.fadeContext.drawImage(inst.backgroundCanvas, 0, 0);
-            inst.fadeContext.globalAlpha = 1;
+            if (fadeTimer == null) fadeTimer = setInterval(function() {
+                if (inst.fadeAlpha < 1) inst.fadeAlpha += 0.01;
+            }, 25);
         },
         onTimer: function () {
             var i,j;
@@ -366,7 +374,12 @@
                 }
             }
             this.context.drawImage(this.backgroundCanvas, 0, 0);
-            if(this.replayLastPointIndex != null) this.context.drawImage(this.fadeCanvas, 0, 0);
+            if(this.replayLastPointIndex != null) {
+                this.context.drawImage(this.fadeCanvas, 0, 0);
+                this.context.globalAlpha = this.fadeAlpha;
+                this.context.drawImage(this.fadeBackgroundCanvas, 0, 0);
+                this.context.globalAlpha = 1;
+            }
             this.context.drawImage(this.bufferCanvas, this.scrollOffset, 0);
         },
         setLinePoints: function (iterations) {
