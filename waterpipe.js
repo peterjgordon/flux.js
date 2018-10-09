@@ -329,6 +329,7 @@
                             if(this.replayLastPointIndex >= this.path.length) {
                                 this.replayLastPointIndex = 0;
                                 // fade out the smoke path which has just finished
+                                this.fadeOverTime();
                                 this.cleanCanvas(this.fadeContext);
                                 this.fadeContext.drawImage(this.bufferCanvas, this.scrollOffset, 0);
                                 this.cleanCanvas(this.bufferContext);
