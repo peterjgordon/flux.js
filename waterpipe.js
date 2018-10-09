@@ -25,6 +25,7 @@
             drawsPerFrame: 10,
             lineWidth: 2,
             speed: 15,
+            fadeSpeed: 50,
             //Interaction
             mousePower: 20,
             //Background
@@ -239,14 +240,16 @@
             }
         },
         fadeOverTime: function() {
-            // this.fadeToBackground(1);
             inst.cleanCanvas(inst.fadeBackgroundContext);
             inst.fadeBackgroundContext.drawImage(inst.backgroundBufferCanvas, 0, 0);
             inst.fadeAlpha = 0;
 
-            if (fadeTimer == null) fadeTimer = setInterval(function() {
+            if (fadeTimer != null) {
+                clearInterval(fadeTimer);
+            }
+            fadeTimer = setInterval(function() {
                 if (inst.fadeAlpha < 1) inst.fadeAlpha += 0.01;
-            }, 25);
+            }, inst.settings.fadeSpeed);
         },
         onTimer: function () {
             var i,j;
@@ -310,6 +313,7 @@
                     // REPLAY MODE
                     if (this.path != null && this.path.length > 0 && !this.drawing) { // TODO flag for replay mode
                         if (this.replayLastPointIndex == null) {
+                            this.fadeOverTime();
                             this.cleanCanvas(this.bufferContext);
                             this.replayLastPointIndex = 0;
                             c.centerX = this.path[0].x + this.preloadSize*2;
@@ -324,10 +328,8 @@
                             this.replayLastPointIndex++;
                             if(this.replayLastPointIndex >= this.path.length) {
                                 this.replayLastPointIndex = 0;
-
+                                // fade out the smoke path which has just finished
                                 this.cleanCanvas(this.fadeContext);
-                                this.fadeOverTime();
-                                this.fadeContext.globalAlpha = 1;
                                 this.fadeContext.drawImage(this.bufferCanvas, this.scrollOffset, 0);
                                 this.cleanCanvas(this.bufferContext);
                             }
