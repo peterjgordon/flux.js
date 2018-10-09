@@ -13,7 +13,7 @@
 ;(function ( $, window, document, undefined ) {
     var pluginName = "waterpipe",
         defaults = {
-            //Smoke
+            // Smoke
             gradientStart: '#000000',
             gradientEnd: '#222222',
             smokeOpacity: 0.1,
@@ -26,9 +26,10 @@
             lineWidth: 2,
             speed: 15,
             fadeSpeed: 50,
-            //Interaction
+            // Interaction
             mousePower: 20,
-            //Background
+            replayPower: 50,
+            // Background
             bgColorInner: "#ffffff",
             bgColorOuter: "#666666",
         };
@@ -98,29 +99,31 @@
             this.mediaRecorder.onstop = this.captureStopped;
 
             // track mouse pos
-            $("#wavybg-wrapper").on('mousedown', function(event) {
+            $("#wavybg-wrapper").on('mousedown touchstart', function(event) {
+                var pos = event.type == 'touchstart' ? event.originalEvent.touches[0] : event;
+
                 inst.drawing = true;
                 inst.path = [];
                 inst.replayLastPointIndex = null;
-                inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
+                inst.path.push({x: Math.round(pos.clientX), y: Math.round(pos.clientY)});
             });
-            $("#wavybg-wrapper").on('mousemove', function(event) {
+            $("#wavybg-wrapper").on('mousemove touchmove', function(event) {
+                var pos = event.type == 'touchmove' ? event.originalEvent.touches[0] : event;
                 if(inst.drawing) {
-                    inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
+                    inst.path.push({x: Math.round(pos.clientX), y: Math.round(pos.clientY)});
                 }
                 if(inst.settings.mousePower == 0) return;
 
-                inst.mousePos = {x: event.clientX, y: event.clientY};
+                inst.mousePos = {x: pos.clientX, y: pos.clientY};
             });
-            $("#wavybg-wrapper").on('touchmove', function(event) {
-                if(inst.settings.mousePower == 0) return;
-
-                inst.mousePos = {x: event.originalEvent.touches[0].clientX, y: event.originalEvent.touches[0].clientY};
-            });
-            $("#wavybg-wrapper").on('mouseup', function(event) {
-                inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
+            $("#wavybg-wrapper").on('mouseup touchend', function(event) {
+                if(event.type != 'touchend') {
+                    // Mouse has a final position in mouseup, touchend doesn't
+                    inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
+                }
+                if(inst.path.length < 5) inst.path = null;
                 inst.drawing = false;
-                console.log(inst.path);
+                console.log("Path: ", inst.path);
             });
 
             // toggle movement
@@ -128,7 +131,7 @@
                 //TODO: inst.toggleMovement();
             });
 
-            //off screen canvas used only when exporting image
+            // off screen canvas used only when exporting image
             this.exportCanvas = document.createElement('canvas');
             this.exportCanvas.width = this.displayWidth;
             this.exportCanvas.height = this.displayHeight;
@@ -311,7 +314,7 @@
                     
                     // MOVE CENTERS
                     // REPLAY MODE
-                    if (this.path != null && this.path.length > 0 && !this.drawing) { // TODO flag for replay mode
+                    if (this.path != null && !this.drawing) {
                         if (this.replayLastPointIndex == null) {
                             this.fadeOverTime();
                             this.cleanCanvas(this.bufferContext);
@@ -336,12 +339,12 @@
                             }
                         } else {
                             // X
-                            if(replayLastPoint.x > actualX) c.centerX += 0.5;
-                            else if(replayLastPoint.x < actualX) c.centerX -= 0.5;
+                            if(replayLastPoint.x > actualX) c.centerX += inst.settings.replayPower/100;
+                            else if(replayLastPoint.x < actualX) c.centerX -= inst.settings.replayPower/100;
 
                             // Y
-                            if(c.centerY < replayLastPoint.y) c.centerY += 0.5;
-                            else if(c.centerY > replayLastPoint.y) c.centerY -= 0.5;
+                            if(c.centerY < replayLastPoint.y) c.centerY += inst.settings.replayPower/100;
+                            else if(c.centerY > replayLastPoint.y) c.centerY -= inst.settings.replayPower/100;
                         }
                     } else {
                         // X
