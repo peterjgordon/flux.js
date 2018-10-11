@@ -37,11 +37,11 @@
     var TWO_PI = 2*Math.PI;
     var timer, fadeTimer;
     var inst;
-    function Smoke ( element, options ) {
+    function Smoke (element, options) {
         this.element = element;
         this.$element = $(element);
         inst = this;
-        this.settings = $.extend( {}, defaults, options );
+        this.settings = $.extend({}, defaults, options);
         this._defaults = defaults;
         this._name = pluginName;
         this.init();
@@ -95,6 +95,7 @@
             $("#wavybg-wrapper").on('mousedown touchstart', function(event) {
                 var pos = event.type == 'touchstart' ? event.originalEvent.touches[0] : event;
 
+                $("#path").val('');
                 inst.drawing = true;
                 inst.path = [];
                 inst.replayLastPointIndex = null;
@@ -110,13 +111,15 @@
                 inst.mousePos = {x: pos.clientX, y: pos.clientY};
             });
             $("#wavybg-wrapper").on('mouseup touchend touchcancel', function(event) {
-                if(event.type == 'mouseup') {
-                    // Mouse has a final position in mouseup, touchend doesn't
-                    inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
+                if(inst.drawing) {
+                    if(event.type == 'mouseup') {
+                        // Mouse has a final position in mouseup, touchend doesn't
+                        inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
+                    }
+                    if(inst.path.length < 5) inst.path = null;
+                    inst.drawing = false;
+                    console.log("Path: ", inst.path);
                 }
-                if(inst.path.length < 5) inst.path = null;
-                inst.drawing = false;
-                console.log("Path: ", inst.path);
             });
 
             // toggle movement with spacebar
@@ -144,6 +147,7 @@
             this.mousePos = {x: $(document).width(), y: $(document).height()/2};
 
             // reset path drawing
+            $("#path").val('');
             this.drawing = false;
             this.path = null;
             this.replayLastPointIndex = null;
@@ -186,8 +190,6 @@
             for (i = 0; i < this.settings.numCircles; i++) {
                 maxR = this.settings.minMaxRad+Math.random()*(this.settings.maxMaxRad-this.settings.minMaxRad);
                 minR = this.settings.minRadFactor*maxR;
-                console.log(maxR + "," + minR)
-                console.log(this.settings.maxMaxRad + "," + this.settings.minMaxRad)
                 
                 //define gradient
                 grad = this.bufferContext.createRadialGradient(0,0,minR,0,0,maxR);
@@ -213,15 +215,6 @@
                 newCircle.pointList1 = this.setLinePoints(this.settings.iterations);
                 newCircle.pointList2 = this.setLinePoints(this.settings.iterations);
             }
-        },
-        getCirclePoint: function(angle) {
-            var centerX = this.displayWidth/2;
-            var centerY = this.displayHeight/2;
-            var radius = Math.min(centerX, centerY)/5*4;
-
-            var x = centerX + radius * Math.cos(-angle * Math.PI/180);
-            var y = centerY + radius * Math.sin(-angle * Math.PI/180);
-            return {x, y}
         },
         toggleMovement: function(forceEnable) {
             var hadNoTimer = timer == null;
@@ -510,6 +503,53 @@
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+        },
+        getCirclePoint: function(centerX, centerY, radius, angle, invert) {
+            if(invert) {
+                angle = 360 - angle;
+                angle += 180;
+            }
+            var x = Math.round(centerX + radius * Math.cos(angle * Math.PI/180));
+            var y = Math.round(centerY + radius * Math.sin(angle * Math.PI/180));
+            return {x, y}
+        },
+        setPath: function(shape) {
+            inst.replayLastPointIndex = null;
+            inst.drawing = false;
+            inst.path = [];
+            switch(shape.toLowerCase()) {
+                case "circle":
+                    var centerX = (this.displayWidth + this.scrollOffset)/2;
+                    var centerY = this.displayHeight/2;
+                    var radius = Math.min(centerX, centerY) - this.settings.maxMaxRad - 50;
+                    for(var i=0; i<360; i+=1) {
+                        inst.path.push(inst.getCirclePoint(centerX, centerY, radius, i));
+                    }
+                    break;
+                case "figure eight":
+                    var screenCenterX = (this.displayWidth + this.scrollOffset)/2;
+                    var screenCenterY = this.displayHeight/2;
+                    var radius = Math.min(screenCenterX, screenCenterY) - this.settings.maxMaxRad - 50;
+                    var leftCenterX = screenCenterX - radius;
+                    var rightCenterX = screenCenterX + radius;
+                    for(var i=0; i<360; i+=1) {
+                        inst.path.push(inst.getCirclePoint(leftCenterX, screenCenterY, radius, i));
+                    }
+                    for(var i=0; i<360; i+=1) {
+                        inst.path.push(inst.getCirclePoint(rightCenterX, screenCenterY, radius, i, true));
+                    }
+                    break;
+                case "square":
+                    inst.path = [
+                        {x: Math.round(inst.settings.maxMaxRad), y: Math.round(inst.settings.maxMaxRad + 50)},
+                        {x: Math.round(inst.displayWidth + inst.scrollOffset - inst.settings.maxMaxRad), y: Math.round(inst.settings.maxMaxRad + 50)},
+                        {x: Math.round(inst.displayWidth + inst.scrollOffset - inst.settings.maxMaxRad), y: Math.round(inst.displayHeight - inst.settings.maxMaxRad - 50)},
+                        {x: Math.round(inst.settings.maxMaxRad), y: Math.round(inst.displayHeight - inst.settings.maxMaxRad - 50)}
+                    ];
+                    break;
+                default:
+                    inst.path = null;
+            }
         }
     };
 
