@@ -91,13 +91,6 @@
             this.backgroundContext = this.backgroundCanvas.getContext("2d");
             this.backgroundBufferContext = this.backgroundBufferCanvas.getContext("2d");
 
-            // recording stream
-            this.stream = this.displayCanvas.captureStream(30);
-            console.log("Stream started: ", this.stream);
-            this.mediaRecorder = new MediaRecorder(this.stream, {mimeType: 'video/webm'});
-            this.mediaRecorder.ondataavailable = this.captureDataAvailable;
-            this.mediaRecorder.onstop = this.captureStopped;
-
             // track mouse pos
             $("#wavybg-wrapper").on('mousedown touchstart', function(event) {
                 var pos = event.type == 'touchstart' ? event.originalEvent.touches[0] : event;
@@ -116,8 +109,8 @@
 
                 inst.mousePos = {x: pos.clientX, y: pos.clientY};
             });
-            $("#wavybg-wrapper").on('mouseup touchend', function(event) {
-                if(event.type != 'touchend') {
+            $("#wavybg-wrapper").on('mouseup touchend touchcancel', function(event) {
+                if(event.type == 'mouseup') {
                     // Mouse has a final position in mouseup, touchend doesn't
                     inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
                 }
@@ -126,9 +119,9 @@
                 console.log("Path: ", inst.path);
             });
 
-            // toggle movement
-            $("#wavybg-wrapper").on('click', function(event) {
-                //TODO: inst.toggleMovement();
+            // toggle movement with spacebar
+            $(window).on('keyup', function(event) {
+                if(event.key == " ") inst.toggleMovement();
             });
 
             // off screen canvas used only when exporting image
@@ -484,21 +477,30 @@
         },
         toggleCapture: function(enable) {
             if (enable) {
-                recordedChunks = [];
-                this.mediaRecorder.start();
+                // recording stream
+                inst.stream = inst.displayCanvas.captureStream(30);
+                console.log("Stream started: ", inst.stream);
+                // media recorder
+                inst.mediaRecorder = new MediaRecorder(inst.stream, {mimeType: 'video/webm', videoBitsPerSecond : 5000000});
+                inst.mediaRecorder.ondataavailable = inst.captureDataAvailable;
+                inst.mediaRecorder.onstop = inst.captureStopped;
+                // start recording
+                inst.recordedChunks = [];
+                inst.mediaRecorder.start();
             } else {
-                this.mediaRecorder.stop();
+                inst.mediaRecorder.stop();
+                inst.stream.getTracks().forEach(track => track.stop());
             }
         },
         captureDataAvailable: function(event) {
             console.log(event.data);
             if(event.data.size > 0) {
-                recordedChunks.push(event.data);
+                inst.recordedChunks.push(event.data);
             }
         },
         captureStopped: function(event) {
-            console.log(recordedChunks.length);
-            var blob = new Blob(recordedChunks, {type: 'video/webm'});
+            console.log(inst.recordedChunks.length);
+            var blob = new Blob(inst.recordedChunks, {type: 'video/webm'});
             var url = window.URL.createObjectURL(blob);
             var a = document.createElement('a');
             a.style.display = 'none';
