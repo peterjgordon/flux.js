@@ -55,7 +55,7 @@
             this.generate();
         },
         initSettings: function () {
-            this.displayRatio = 0.5;
+            this.displayRatio = 2;
             this.settings.mousePower *= this.displayRatio;
             this.settings.replayPower *= this.displayRatio;
 
@@ -65,7 +65,7 @@
 
             this.displayWidth = this.$element[0].offsetWidth + this.displayPreloadSize*2;
             this.displayHeight = this.$element[0].offsetHeight;
-            this.canvasWidth = this.$element[0].offsetWidth + this.preloadSize*2 * this.displayRatio;
+            this.canvasWidth = this.$element[0].offsetWidth * this.displayRatio + this.preloadSize*2;
             this.canvasHeight = this.displayHeight * this.displayRatio;
 
             var radius = this.canvasHeight/5;
@@ -76,7 +76,6 @@
             this.displayCanvas = this.$element.find('canvas')[0];
             this.bufferCanvas = document.createElement("canvas");
             this.fadeCanvas = document.createElement("canvas");
-            this.fadeBackgroundCanvas = document.createElement("canvas");
             this.backgroundCanvas = document.createElement("canvas");
             this.backgroundBufferCanvas = document.createElement("canvas");
 
@@ -86,8 +85,6 @@
             this.bufferCanvas.height = this.canvasHeight;
             this.fadeCanvas.width = this.canvasWidth;
             this.fadeCanvas.height = this.canvasHeight;
-            this.fadeBackgroundCanvas.width = this.canvasWidth;
-            this.fadeBackgroundCanvas.height = this.canvasHeight;
             this.backgroundCanvas.width = this.canvasWidth;
             this.backgroundCanvas.height = this.canvasHeight;
             this.backgroundBufferCanvas.width = this.canvasWidth;
@@ -96,7 +93,6 @@
             this.context = this.displayCanvas.getContext("2d");
             this.bufferContext = this.bufferCanvas.getContext("2d");
             this.fadeContext = this.fadeCanvas.getContext("2d");
-            this.fadeBackgroundContext = this.fadeBackgroundCanvas.getContext("2d");
             this.backgroundContext = this.backgroundCanvas.getContext("2d");
             this.backgroundBufferContext = this.backgroundBufferCanvas.getContext("2d");
 
@@ -242,15 +238,13 @@
             }
         },
         fadeOverTime: function() {
-            inst.cleanCanvas(inst.fadeBackgroundContext);
-            inst.fadeBackgroundContext.drawImage(inst.backgroundBufferCanvas, 0, 0);
-            inst.fadeAlpha = 0;
+            inst.fadeAmount = 100;
 
             if (fadeTimer != null) {
                 clearInterval(fadeTimer);
             }
             fadeTimer = setInterval(function() {
-                if (inst.fadeAlpha < 1) inst.fadeAlpha += 0.01;
+                if (inst.fadeAmount > 0) inst.fadeAmount--;
             }, inst.settings.fadeSpeed);
         },
         onTimer: function () {
@@ -381,9 +375,8 @@
             this.context.setTransform(1/this.displayRatio, 0, 0, 1/this.displayRatio, 0, 0);
             this.context.drawImage(this.backgroundCanvas, 0, 0);
             if(this.replayLastPointIndex != null) {
+                this.context.globalAlpha = this.fadeAmount/100;
                 this.context.drawImage(this.fadeCanvas, 0, 0);
-                this.context.globalAlpha = this.fadeAlpha;
-                this.context.drawImage(this.fadeBackgroundCanvas, 0, 0);
                 this.context.globalAlpha = 1;
             }
             this.context.drawImage(this.bufferCanvas, this.scrollOffset, 0);
