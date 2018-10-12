@@ -98,8 +98,8 @@
 
             // off screen canvas used only when exporting image
             this.exportCanvas = document.createElement('canvas');
-            this.exportCanvas.width = this.displayWidth;
-            this.exportCanvas.height = this.displayHeight;
+            this.exportCanvas.width = this.canvasWidth;
+            this.exportCanvas.height = this.canvasHeight;
             this.exportContext = this.exportCanvas.getContext("2d");
         },
         initEvents: function() {
@@ -309,7 +309,8 @@
                     // REPLAY MODE
                     if (this.path != null && !this.drawing) {
                         if (this.replayLastPointIndex == null) {
-                            //this.fadeOverTime();
+                            this.fadeOverTime();
+                            this.cleanCanvas(this.fadeContext);
                             this.cleanCanvas(this.bufferContext);
                             this.replayLastPointIndex = 0;
                             c.centerX = this.path[0].x + this.preloadSize*2;
@@ -480,22 +481,24 @@
             result = 'rgba('+r+','+g+','+b+','+opacity+')';
             return result;
         },
-        download: function(width, height){
-            this.exportContext.drawImage(this.displayCanvas, 0, 0, width, height, 0, 0, width, height);
-            //we will open a new window with the image contained within:        
-            //retrieve canvas image as data URL:
-            var dataURL = this.exportCanvas.toDataURL("image/png");
-            //open a new window of appropriate size to hold the image:
-            var imageWindow = window.open("", "fractalLineImage", "left=0,top=0,width="+width+",height="+height+",toolbar=0,resizable=0");
-            //write some html into the new window, creating an empty image:
+        download: function(){
+            // draw at full size
+            this.exportContext.drawImage(this.backgroundCanvas, 0, 0);
+            if(this.replayLastPointIndex != null) {
+                this.exportContext.globalAlpha = this.fadeAmount/100;
+                this.exportContext.drawImage(this.fadeCanvas, 0, 0);
+                this.exportContext.globalAlpha = 1;
+            }
+            this.exportContext.drawImage(this.bufferCanvas, this.scrollOffset, 0);
+
+            // open new window
+            var imageWindow = window.open("", "fractalLineImage", "");
             imageWindow.document.write("<title>Export Image</title>")
-            imageWindow.document.write("<img id='exportImage'"
-                                        + " alt=''"
-                                        + " height='" + height + "'"
-                                        + " width='"  + width  + "'"
-                                        + " style='position:absolute;left:0;top:0'/>");
+            imageWindow.document.write("<img id='exportImage' alt='' style='position:absolute;left:0;top:0'/>");
             imageWindow.document.close();
-            //copy the image into the empty img in the newly opened window:
+
+            // export
+            var dataURL = this.exportCanvas.toDataURL("image/png");
             var exportImage = imageWindow.document.getElementById("exportImage");
             exportImage.src = dataURL;
         },
@@ -559,7 +562,7 @@
                     break;
                 case "figure eight":
                     var screenCenterX = (this.canvasWidth + this.scrollOffset)/2;
-                    var screenCenterY = this.canvasHeight/2;
+                    var screenCenterY = this.canvasHeight/2 - 50;
                     var radius = Math.min(screenCenterX, screenCenterY) - this.settings.maxMaxRad - 50;
                     var leftCenterX = screenCenterX - radius;
                     var rightCenterX = screenCenterX + radius;
