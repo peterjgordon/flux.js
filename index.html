@@ -29,6 +29,14 @@
 		</div>
 	</div>
 	<div class="generator-form-wrap">
+		<form id="ratio-form">
+			<h2>Canvas size</h2>
+			<div class="input-group">
+				<label for="ratio">Quality: <span class="value">1</span></label>
+				<div class="ratio-slider"></div>
+				<input type="hidden" id="ratio" name="ratio" value="10" class="slider"></input>
+			</div>
+		</form>
 		<form class="generator-params">
 			<h2>Smoke style</h2>
 			<div class="input-group">
@@ -96,15 +104,6 @@
 			<div class="input-group">
 				<label for="bgColorInner">Inner color:</label>
 				<input type="text" id="bgColorInner" name="bgColorInner" class="color-picker color-inner" value="#ffffff"></input>
-			</div>
-			<h2>Download size</h2>
-			<div class="input-group">
-				<label for="downloadWidth">Width (px):</label>
-				<input type="text" id="downloadWidth" name="downloadWidth"></input>
-			</div>
-			<div class="input-group">
-				<label for="downloadHeight">Height (px):</label>
-				<input type="text" id="downloadHeight" name="downloadHeight"></input>
 			</div>
 			<h2 id="samples-section">Samples (click to generate)</h2>
 			<div class="input-group samples">

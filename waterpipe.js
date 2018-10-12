@@ -14,6 +14,7 @@
     var pluginName = "waterpipe",
         defaults = {
             // Smoke
+            displayRatio: 1,
             gradientStart: '#000000',
             gradientEnd: '#222222',
             smokeOpacity: 0.1,
@@ -55,18 +56,17 @@
             this.generate();
         },
         initSettings: function () {
-            this.displayRatio = 2;
-            this.settings.mousePower *= this.displayRatio;
-            this.settings.replayPower *= this.displayRatio;
+            this.settings.mousePower *= this.settings.displayRatio;
+            this.settings.replayPower *= this.settings.displayRatio;
 
             // preload area, offscreen to left and right
             this.displayPreloadSize = 500;
-            this.preloadSize = this.displayPreloadSize * this.displayRatio;
+            this.preloadSize = this.displayPreloadSize * this.settings.displayRatio;
 
             this.displayWidth = this.$element[0].offsetWidth + this.displayPreloadSize*2;
             this.displayHeight = this.$element[0].offsetHeight;
-            this.canvasWidth = this.$element[0].offsetWidth * this.displayRatio + this.preloadSize*2;
-            this.canvasHeight = this.displayHeight * this.displayRatio;
+            this.canvasWidth = this.$element[0].offsetWidth * this.settings.displayRatio + this.preloadSize*2;
+            this.canvasHeight = this.displayHeight * this.settings.displayRatio;
 
             var radius = this.canvasHeight/5;
             if(this.settings.maxMaxRad==='auto') this.settings.maxMaxRad = radius;
@@ -114,22 +114,22 @@
                 inst.drawing = true;
                 inst.path = [];
                 inst.replayLastPointIndex = null;
-                inst.path.push({x: Math.round(pos.clientX * inst.displayRatio), y: Math.round(pos.clientY * inst.displayRatio)});
+                inst.path.push({x: Math.round(pos.clientX * inst.settings.displayRatio), y: Math.round(pos.clientY * inst.settings.displayRatio)});
             });
             $("#wavybg-wrapper").on('mousemove touchmove', function(event) {
                 var pos = event.type == 'touchmove' ? event.originalEvent.touches[0] : event;
                 if(inst.drawing) {
-                    inst.path.push({x: Math.round(pos.clientX * inst.displayRatio), y: Math.round(pos.clientY * inst.displayRatio)});
+                    inst.path.push({x: Math.round(pos.clientX * inst.settings.displayRatio), y: Math.round(pos.clientY * inst.settings.displayRatio)});
                 }
                 if(inst.settings.mousePower == 0) return;
 
-                inst.mousePos = {x: pos.clientX * inst.displayRatio, y: pos.clientY * inst.displayRatio};
+                inst.mousePos = {x: pos.clientX * inst.settings.displayRatio, y: pos.clientY * inst.settings.displayRatio};
             });
             $("#wavybg-wrapper").on('mouseup touchend touchcancel', function(event) {
                 if(inst.drawing) {
                     if(event.type == 'mouseup') {
                         // Mouse has a final position in mouseup, touchend doesn't
-                        inst.path.push({x: Math.round(event.clientX * inst.displayRatio), y: Math.round(event.clientY * inst.displayRatio)});
+                        inst.path.push({x: Math.round(event.clientX * inst.settings.displayRatio), y: Math.round(event.clientY * inst.settings.displayRatio)});
                     }
                     if(inst.path.length < 5) inst.path = null;
                     inst.drawing = false;
@@ -153,7 +153,7 @@
             this.setCircles();
 
             // reset mouse pos
-            this.mousePos = {x: $(document).width() * inst.displayRatio, y: $(document).height()/2 * inst.displayRatio};
+            this.mousePos = {x: $(document).width() * inst.settings.displayRatio, y: $(document).height()/2 * inst.settings.displayRatio};
 
             // reset path drawing
             $("#path").val('');
@@ -373,7 +373,7 @@
                     //context.fill();
                 }
             }
-            this.context.setTransform(1/this.displayRatio, 0, 0, 1/this.displayRatio, 0, 0);
+            this.context.setTransform(1/this.settings.displayRatio, 0, 0, 1/this.settings.displayRatio, 0, 0);
             this.context.drawImage(this.backgroundCanvas, 0, 0);
             if(this.replayLastPointIndex != null) {
                 this.context.globalAlpha = this.fadeAmount/100;
@@ -451,7 +451,7 @@
             switch(optionName) {
                 case 'mousePower':
                 case 'replayPower':
-                    optionValue *= this.displayRatio;
+                    optionValue *= this.settings.displayRatio;
                     break;
                 case 'smokeOpacity':
                     optionValue /= 100;
