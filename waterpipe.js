@@ -49,19 +49,30 @@
 
     Smoke.prototype = {
         init: function () {
-            this.initCanvas();
             this.initSettings();
+            this.initCanvas();
+            this.initEvents();
             this.generate();
         },
         initSettings: function () {
-            var radius = this.$element.height()/5;
+            this.displayRatio = 0.5;
+            this.settings.mousePower *= this.displayRatio;
+            this.settings.replayPower *= this.displayRatio;
+
+            // preload area, offscreen to left and right
+            this.displayPreloadSize = 500;
+            this.preloadSize = this.displayPreloadSize * this.displayRatio;
+
+            this.displayWidth = this.$element[0].offsetWidth + this.displayPreloadSize*2;
+            this.displayHeight = this.$element[0].offsetHeight;
+            this.canvasWidth = this.$element[0].offsetWidth + this.preloadSize*2 * this.displayRatio;
+            this.canvasHeight = this.displayHeight * this.displayRatio;
+
+            var radius = this.canvasHeight/5;
             if(this.settings.maxMaxRad==='auto') this.settings.maxMaxRad = radius;
             if(this.settings.minMaxRad==='auto') this.settings.minMaxRad = radius;
         },
         initCanvas: function () {
-            // preload area, offscreen to left and right
-            this.preloadSize = 500;
-
             this.displayCanvas = this.$element.find('canvas')[0];
             this.bufferCanvas = document.createElement("canvas");
             this.fadeCanvas = document.createElement("canvas");
@@ -69,20 +80,18 @@
             this.backgroundCanvas = document.createElement("canvas");
             this.backgroundBufferCanvas = document.createElement("canvas");
 
-            this.displayWidth = this.$element[0].offsetWidth + this.preloadSize*2;
-            this.displayHeight = this.$element[0].offsetHeight;
             this.displayCanvas.width = this.displayWidth;
             this.displayCanvas.height = this.displayHeight;
-            this.bufferCanvas.width = this.displayWidth;
-            this.bufferCanvas.height = this.displayHeight;
-            this.fadeCanvas.width = this.displayWidth;
-            this.fadeCanvas.height = this.displayHeight;
-            this.fadeBackgroundCanvas.width = this.displayWidth;
-            this.fadeBackgroundCanvas.height = this.displayHeight;
-            this.backgroundCanvas.width = this.displayWidth;
-            this.backgroundCanvas.height = this.displayHeight;
-            this.backgroundBufferCanvas.width = this.displayWidth;
-            this.backgroundBufferCanvas.height = this.displayHeight;
+            this.bufferCanvas.width = this.canvasWidth;
+            this.bufferCanvas.height = this.canvasHeight;
+            this.fadeCanvas.width = this.canvasWidth;
+            this.fadeCanvas.height = this.canvasHeight;
+            this.fadeBackgroundCanvas.width = this.canvasWidth;
+            this.fadeBackgroundCanvas.height = this.canvasHeight;
+            this.backgroundCanvas.width = this.canvasWidth;
+            this.backgroundCanvas.height = this.canvasHeight;
+            this.backgroundBufferCanvas.width = this.canvasWidth;
+            this.backgroundBufferCanvas.height = this.canvasHeight;
 
             this.context = this.displayCanvas.getContext("2d");
             this.bufferContext = this.bufferCanvas.getContext("2d");
@@ -90,6 +99,16 @@
             this.fadeBackgroundContext = this.fadeBackgroundCanvas.getContext("2d");
             this.backgroundContext = this.backgroundCanvas.getContext("2d");
             this.backgroundBufferContext = this.backgroundBufferCanvas.getContext("2d");
+
+            // off screen canvas used only when exporting image
+            this.exportCanvas = document.createElement('canvas');
+            this.exportCanvas.width = this.displayWidth;
+            this.exportCanvas.height = this.displayHeight;
+            this.exportContext = this.exportCanvas.getContext("2d");
+        },
+        initEvents: function() {
+            // These should really be partly moved to the builder_scripts.js file
+            // as they reference elements on the example page
 
             // track mouse pos
             $("#wavybg-wrapper").on('mousedown touchstart', function(event) {
@@ -99,22 +118,22 @@
                 inst.drawing = true;
                 inst.path = [];
                 inst.replayLastPointIndex = null;
-                inst.path.push({x: Math.round(pos.clientX), y: Math.round(pos.clientY)});
+                inst.path.push({x: Math.round(pos.clientX * inst.displayRatio), y: Math.round(pos.clientY * inst.displayRatio)});
             });
             $("#wavybg-wrapper").on('mousemove touchmove', function(event) {
                 var pos = event.type == 'touchmove' ? event.originalEvent.touches[0] : event;
                 if(inst.drawing) {
-                    inst.path.push({x: Math.round(pos.clientX), y: Math.round(pos.clientY)});
+                    inst.path.push({x: Math.round(pos.clientX * inst.displayRatio), y: Math.round(pos.clientY * inst.displayRatio)});
                 }
                 if(inst.settings.mousePower == 0) return;
 
-                inst.mousePos = {x: pos.clientX, y: pos.clientY};
+                inst.mousePos = {x: pos.clientX * inst.displayRatio, y: pos.clientY * inst.displayRatio};
             });
             $("#wavybg-wrapper").on('mouseup touchend touchcancel', function(event) {
                 if(inst.drawing) {
                     if(event.type == 'mouseup') {
                         // Mouse has a final position in mouseup, touchend doesn't
-                        inst.path.push({x: Math.round(event.clientX), y: Math.round(event.clientY)});
+                        inst.path.push({x: Math.round(event.clientX * inst.displayRatio), y: Math.round(event.clientY * inst.displayRatio)});
                     }
                     if(inst.path.length < 5) inst.path = null;
                     inst.drawing = false;
@@ -126,12 +145,6 @@
             $(window).on('keyup', function(event) {
                 if(event.key == " ") inst.toggleMovement();
             });
-
-            // off screen canvas used only when exporting image
-            this.exportCanvas = document.createElement('canvas');
-            this.exportCanvas.width = this.displayWidth;
-            this.exportCanvas.height = this.displayHeight;
-            this.exportContext = this.exportCanvas.getContext("2d");
         },
         generate: function () {
             console.log(this.settings);
@@ -144,7 +157,7 @@
             this.setCircles();
 
             // reset mouse pos
-            this.mousePos = {x: $(document).width(), y: $(document).height()/2};
+            this.mousePos = {x: $(document).width() * inst.displayRatio, y: $(document).height()/2 * inst.displayRatio};
 
             // reset path drawing
             $("#path").val('');
@@ -157,11 +170,11 @@
         },
         cleanCanvas: function(context) {
             context.setTransform(1,0,0,1,0,0);
-            context.clearRect(0,0,this.displayWidth,this.displayHeight);
+            context.clearRect(0,0,this.canvasWidth,this.canvasHeight);
         },
         fillBackground: function () {
-            var outerRad = Math.sqrt(this.displayWidth*this.displayWidth + this.displayHeight*this.displayHeight)/2;
-            this.niceGradient = new SmokeNiceBG(this.displayWidth*0.75,this.displayHeight/2*0.75,0,this.displayWidth/2,this.displayHeight/4,outerRad);
+            var outerRad = Math.sqrt(this.canvasWidth*this.canvasWidth + this.canvasHeight*this.canvasHeight)/2;
+            this.niceGradient = new SmokeNiceBG(this.canvasWidth*0.75,this.canvasHeight/2*0.75,0,this.canvasWidth/2,this.canvasHeight/4,outerRad);
 
             var hex = this.settings.bgColorInner.replace('#','');
 
@@ -176,8 +189,8 @@
 
             this.niceGradient.addColorStop(0,r0,g0,b0);
             this.niceGradient.addColorStop(1,r1,g1,b1);
-            this.niceGradient.fillRect(this.backgroundContext,0,0,this.displayWidth,this.displayHeight);
-            this.niceGradient.fillRect(this.backgroundBufferContext,0,0,this.displayWidth,this.displayHeight);
+            this.niceGradient.fillRect(this.backgroundContext,0,0,this.canvasWidth,this.canvasHeight);
+            this.niceGradient.fillRect(this.backgroundBufferContext,0,0,this.canvasWidth,this.canvasHeight);
         },
         setCircles: function () {
             var i;
@@ -201,7 +214,7 @@
                 
                 var newCircle = {
                     centerX: -maxR + this.preloadSize*2,
-                    centerY: this.displayHeight/2-50,
+                    centerY: this.canvasHeight/2-50,
                     maxRad : maxR,
                     minRad : minR,
                     color: grad, //can set a gradient or solid color here.
@@ -261,15 +274,15 @@
                     // (disabled in replay mode)
                     if (this.scrollOffset > -this.preloadSize*2) this.scrollOffset -= (this.settings.mousePower || this._defaults.mousePower)/50;
                     
-                    if (this.circles[0].centerX + this.preloadSize > this.displayWidth) {
-                        var imageData = this.bufferContext.getImageData(0, 0, this.displayWidth, this.displayHeight);
+                    if (this.circles[0].centerX + this.preloadSize > this.canvasWidth) {
+                        var imageData = this.bufferContext.getImageData(0, 0, this.canvasWidth, this.canvasHeight);
                         this.cleanCanvas(this.bufferContext);
                         this.bufferContext.putImageData(imageData, -this.preloadSize, 0);
                         this.scrollOffset = -this.preloadSize;
 
                         for (i = 0; i < this.settings.numCircles; i++) {
                             c = this.circles[i];
-                            c.centerX = this.displayWidth - this.preloadSize*2;
+                            c.centerX = this.canvasWidth - this.preloadSize*2;
                         }
                     }
                 }
@@ -302,7 +315,7 @@
                     // REPLAY MODE
                     if (this.path != null && !this.drawing) {
                         if (this.replayLastPointIndex == null) {
-                            this.fadeOverTime();
+                            //this.fadeOverTime();
                             this.cleanCanvas(this.bufferContext);
                             this.replayLastPointIndex = 0;
                             c.centerX = this.path[0].x + this.preloadSize*2;
@@ -365,6 +378,7 @@
                     //context.fill();
                 }
             }
+            this.context.setTransform(1/this.displayRatio, 0, 0, 1/this.displayRatio, 0, 0);
             this.context.drawImage(this.backgroundCanvas, 0, 0);
             if(this.replayLastPointIndex != null) {
                 this.context.drawImage(this.fadeCanvas, 0, 0);
@@ -438,7 +452,31 @@
         },
         setOption: function (optionName, optionValue) {
             if(!isNaN(optionValue)) optionValue = parseFloat(optionValue);
+
+            // special cases
+            switch(optionName) {
+                case 'mousePower':
+                case 'replayPower':
+                    optionValue *= this.displayRatio;
+                    break;
+                case 'smokeOpacity':
+                    optionValue /= 100;
+                    break;
+                case 'radius':
+                    var radius = this.canvasHeight/5*(params.radiusSize/100);
+                    this.setOption('maxMaxRad', radius);
+                    this.setOption('minMaxRad', radius);
+                    return;
+            }
+
             this.settings[optionName] = optionValue;
+        },
+        setOptions: function (options) {
+            for(var option in options) {
+                if(!options.hasOwnProperty(option)) continue;
+
+                this.setOption(option, options[option]);
+            }
         },
         hexToRGBA: function (hex, opacity) {
             hex = hex.replace('#','');
@@ -519,16 +557,16 @@
             inst.path = [];
             switch(shape.toLowerCase()) {
                 case "circle":
-                    var centerX = (this.displayWidth + this.scrollOffset)/2;
-                    var centerY = this.displayHeight/2;
+                    var centerX = (this.canvasWidth + this.scrollOffset)/2;
+                    var centerY = this.canvasHeight/2;
                     var radius = Math.min(centerX, centerY) - this.settings.maxMaxRad - 50;
                     for(var i=0; i<360; i+=1) {
                         inst.path.push(inst.getCirclePoint(centerX, centerY, radius, i));
                     }
                     break;
                 case "figure eight":
-                    var screenCenterX = (this.displayWidth + this.scrollOffset)/2;
-                    var screenCenterY = this.displayHeight/2;
+                    var screenCenterX = (this.canvasWidth + this.scrollOffset)/2;
+                    var screenCenterY = this.canvasHeight/2;
                     var radius = Math.min(screenCenterX, screenCenterY) - this.settings.maxMaxRad - 50;
                     var leftCenterX = screenCenterX - radius;
                     var rightCenterX = screenCenterX + radius;
@@ -542,9 +580,9 @@
                 case "square":
                     inst.path = [
                         {x: Math.round(inst.settings.maxMaxRad), y: Math.round(inst.settings.maxMaxRad + 50)},
-                        {x: Math.round(inst.displayWidth + inst.scrollOffset - inst.settings.maxMaxRad), y: Math.round(inst.settings.maxMaxRad + 50)},
-                        {x: Math.round(inst.displayWidth + inst.scrollOffset - inst.settings.maxMaxRad), y: Math.round(inst.displayHeight - inst.settings.maxMaxRad - 50)},
-                        {x: Math.round(inst.settings.maxMaxRad), y: Math.round(inst.displayHeight - inst.settings.maxMaxRad - 50)}
+                        {x: Math.round(inst.canvasWidth + inst.scrollOffset - inst.settings.maxMaxRad), y: Math.round(inst.settings.maxMaxRad + 50)},
+                        {x: Math.round(inst.canvasWidth + inst.scrollOffset - inst.settings.maxMaxRad), y: Math.round(inst.canvasHeight - inst.settings.maxMaxRad - 50)},
+                        {x: Math.round(inst.settings.maxMaxRad), y: Math.round(inst.canvasHeight - inst.settings.maxMaxRad - 50)}
                     ];
                     break;
                 default:
