@@ -33,6 +33,7 @@
             // Background
             bgColorInner: "#ffffff",
             bgColorOuter: "#666666",
+            disableBg: false
         };
 
     var TWO_PI = 2*Math.PI;
@@ -373,8 +374,9 @@
                     //context.fill();
                 }
             }
+            if(this.settings.disableBg) this.cleanCanvas(this.context);
             this.context.setTransform(1/this.settings.displayRatio, 0, 0, 1/this.settings.displayRatio, 0, 0);
-            this.context.drawImage(this.backgroundCanvas, 0, 0);
+            if(!this.settings.disableBg) this.context.drawImage(this.backgroundCanvas, 0, 0);
             if(this.replayLastPointIndex != null) {
                 this.context.globalAlpha = this.fadeAmount/100;
                 this.context.drawImage(this.fadeCanvas, 0, 0);
@@ -483,7 +485,8 @@
         },
         download: function(){
             // draw at full size
-            this.exportContext.drawImage(this.backgroundCanvas, 0, 0);
+            if(this.settings.disableBg) this.cleanCanvas(this.backgroundContext);
+            else this.exportContext.drawImage(this.backgroundCanvas, 0, 0);
             if(this.replayLastPointIndex != null) {
                 this.exportContext.globalAlpha = this.fadeAmount/100;
                 this.exportContext.drawImage(this.fadeCanvas, 0, 0);
