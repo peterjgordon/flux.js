@@ -33,7 +33,7 @@
             // Background
             bgColorInner: "#ffffff",
             bgColorOuter: "#666666",
-            disableBg: false
+            disableBg: true
         };
 
     var TWO_PI = 2*Math.PI;
