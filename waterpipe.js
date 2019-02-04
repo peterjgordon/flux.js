@@ -61,13 +61,11 @@
             this.settings.replayPower *= this.settings.displayRatio;
 
             // preload area, offscreen to left and right
-            this.displayPreloadSize = 500;
-            this.preloadSize = this.displayPreloadSize * this.settings.displayRatio;
+            this.basePreloadSize = 500;
+            this.preloadSize = this.basePreloadSize * this.settings.displayRatio;
 
-            this.displayWidth = this.$element[0].offsetWidth + this.displayPreloadSize*2;
-            this.displayHeight = this.$element[0].offsetHeight;
-            this.canvasWidth = this.$element[0].offsetWidth * this.settings.displayRatio + this.preloadSize*2;
-            this.canvasHeight = this.displayHeight * this.settings.displayRatio;
+            this.canvasWidth = this.$element[0].offsetWidth * this.settings.displayRatio + this.basePreloadSize;
+            this.canvasHeight = this.$element[0].offsetHeight * this.settings.displayRatio;
 
             var radius = this.canvasHeight/5;
             if(this.settings.maxMaxRad==='auto') this.settings.maxMaxRad = radius;
@@ -79,8 +77,10 @@
             this.fadeCanvas = document.createElement("canvas");
             this.backgroundCanvas = document.createElement("canvas");
 
-            this.displayCanvas.width = this.displayWidth;
-            this.displayCanvas.height = this.displayHeight;
+            this.displayCanvas.width = this.canvasWidth;
+            this.displayCanvas.height = this.canvasHeight;
+            this.displayCanvas.style.transformOrigin = "0 0"; // scale from top left
+            this.displayCanvas.style.transform = "scale(" + Math.min(window.innerWidth/(this.canvasWidth-this.basePreloadSize), window.innerHeight/this.canvasHeight) + ")"; // scale to fit window
             this.bufferCanvas.width = this.canvasWidth;
             this.bufferCanvas.height = this.canvasHeight;
             this.fadeCanvas.width = this.canvasWidth;
@@ -91,13 +91,7 @@
             this.context = this.displayCanvas.getContext("2d");
             this.bufferContext = this.bufferCanvas.getContext("2d");
             this.fadeContext = this.fadeCanvas.getContext("2d");
-            this.backgroundContext = this.backgroundCanvas.getContext("2d");
-
-            // off screen canvas used only when exporting image
-            this.exportCanvas = document.createElement('canvas');
-            this.exportCanvas.width = this.canvasWidth;
-            this.exportCanvas.height = this.canvasHeight;
-            this.exportContext = this.exportCanvas.getContext("2d");
+            this.backgroundContext = this.backgroundCanvas.getContext("2d", { alpha: false });
         },
         initEvents: function() {
             // These should really be partly moved to the builder_scripts.js file
@@ -215,22 +209,21 @@
                     changeSpeed : 1/250,
                     phase : Math.PI, //the phase to use for a single fractal curve.
                     globalPhase: Math.PI //the curve as a whole will rise and fall by a sinusoid.
-                    };
+                };
                 this.circles.push(newCircle);
                 newCircle.pointList1 = this.setLinePoints(this.settings.iterations);
                 newCircle.pointList2 = this.setLinePoints(this.settings.iterations);
             }
         },
         toggleMovement: function(forceEnable) {
-            var hadNoTimer = timer == null;
-            if(timer) {
-                clearInterval(timer);
-                timer = null;
+            var hadNoTimer = this.timer == null;
+            if(this.timer) {
+                window.cancelAnimationFrame(this.timer);
+                this.timer = null;
             }
             if(forceEnable || hadNoTimer) {
-                timer = setInterval(function() {
-                    inst.onTimer();
-                }, inst.settings.speed);
+                this.timer = window.requestAnimationFrame(() => {inst.onTimer()});
+                // TODO: inst.settings.speed
             }
         },
         fadeOverTime: function() {
@@ -313,11 +306,9 @@
                             c.centerY = this.path[0].y;
                         }
                         replayLastPoint = this.path[this.replayLastPointIndex];
-                        //console.log(c.centerX - this.preloadSize*2, replayLastPoint.x, c.centerY, replayLastPoint.y);
                         actualX = Math.round(c.centerX + this.scrollOffset);
                         if(actualX == replayLastPoint.x && Math.round(c.centerY) == replayLastPoint.y) {
                             // start moving to next point
-                            //console.log("Next point:", this.replayLastPointIndex);
                             this.replayLastPointIndex++;
                             if(this.replayLastPointIndex >= this.path.length) {
                                 this.replayLastPointIndex = 0;
@@ -370,14 +361,14 @@
                 }
             }
             if(this.settings.disableBg) this.cleanCanvas(this.context);
-            this.context.setTransform(1/this.settings.displayRatio, 0, 0, 1/this.settings.displayRatio, 0, 0);
-            if(!this.settings.disableBg) this.context.drawImage(this.backgroundCanvas, 0, 0);
+            else this.context.drawImage(this.backgroundCanvas, 0, 0);
             if(this.replayLastPointIndex != null) {
                 this.context.globalAlpha = this.fadeAmount/100;
                 this.context.drawImage(this.fadeCanvas, 0, 0);
                 this.context.globalAlpha = 1;
             }
             this.context.drawImage(this.bufferCanvas, this.scrollOffset, 0);
+            if(this.timer) this.timer = window.requestAnimationFrame(() => {inst.onTimer()});
         },
         setLinePoints: function (iterations) {
             var pointList = {};
@@ -479,24 +470,14 @@
             return result;
         },
         download: function(){
-            // draw at full size
-            if(this.settings.disableBg) this.cleanCanvas(this.backgroundContext);
-            else this.exportContext.drawImage(this.backgroundCanvas, 0, 0);
-            if(this.replayLastPointIndex != null) {
-                this.exportContext.globalAlpha = this.fadeAmount/100;
-                this.exportContext.drawImage(this.fadeCanvas, 0, 0);
-                this.exportContext.globalAlpha = 1;
-            }
-            this.exportContext.drawImage(this.bufferCanvas, this.scrollOffset, 0);
-
             // open new window
             var imageWindow = window.open("", "fractalLineImage", "");
-            imageWindow.document.write("<title>Export Image</title>")
+            imageWindow.document.write("<title>Export Image</title>");
             imageWindow.document.write("<img id='exportImage' alt='' style='position:absolute;left:0;top:0'/>");
             imageWindow.document.close();
 
             // export
-            var dataURL = this.exportCanvas.toDataURL("image/png");
+            var dataURL = this.displayCanvas.toDataURL("image/png");
             var exportImage = imageWindow.document.getElementById("exportImage");
             exportImage.src = dataURL;
         },
