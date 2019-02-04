@@ -78,7 +78,6 @@
             this.bufferCanvas = document.createElement("canvas");
             this.fadeCanvas = document.createElement("canvas");
             this.backgroundCanvas = document.createElement("canvas");
-            this.backgroundBufferCanvas = document.createElement("canvas");
 
             this.displayCanvas.width = this.displayWidth;
             this.displayCanvas.height = this.displayHeight;
@@ -88,14 +87,11 @@
             this.fadeCanvas.height = this.canvasHeight;
             this.backgroundCanvas.width = this.canvasWidth;
             this.backgroundCanvas.height = this.canvasHeight;
-            this.backgroundBufferCanvas.width = this.canvasWidth;
-            this.backgroundBufferCanvas.height = this.canvasHeight;
 
             this.context = this.displayCanvas.getContext("2d");
             this.bufferContext = this.bufferCanvas.getContext("2d");
             this.fadeContext = this.fadeCanvas.getContext("2d");
             this.backgroundContext = this.backgroundCanvas.getContext("2d");
-            this.backgroundBufferContext = this.backgroundBufferCanvas.getContext("2d");
 
             // off screen canvas used only when exporting image
             this.exportCanvas = document.createElement('canvas');
@@ -187,7 +183,6 @@
             this.niceGradient.addColorStop(0,r0,g0,b0);
             this.niceGradient.addColorStop(1,r1,g1,b1);
             this.niceGradient.fillRect(this.backgroundContext,0,0,this.canvasWidth,this.canvasHeight);
-            this.niceGradient.fillRect(this.backgroundBufferContext,0,0,this.canvasWidth,this.canvasHeight);
         },
         setCircles: function () {
             var i;
