@@ -61,7 +61,7 @@
             this.settings.replayPower *= this.settings.displayRatio;
 
             // preload area, offscreen to left and right
-            this.basePreloadSize = 500;
+            this.basePreloadSize = 250;
             this.preloadSize = this.basePreloadSize * this.settings.displayRatio;
 
             this.canvasWidth = this.$element[0].offsetWidth * this.settings.displayRatio + this.basePreloadSize;
@@ -258,9 +258,10 @@
                     if (this.scrollOffset > -this.preloadSize*2) this.scrollOffset -= (this.settings.mousePower || this._defaults.mousePower)/50;
                     
                     if (this.circles[0].centerX + this.preloadSize > this.canvasWidth) {
-                        var imageData = this.bufferContext.getImageData(0, 0, this.canvasWidth, this.canvasHeight);
-                        this.cleanCanvas(this.bufferContext);
-                        this.bufferContext.putImageData(imageData, -this.preloadSize, 0);
+                        this.bufferContext.globalCompositeOperation = "copy";
+                        this.bufferContext.setTransform(1,0,0,1,0,0);
+                        this.bufferContext.drawImage(this.bufferCanvas, -this.preloadSize, 0);
+                        this.bufferContext.globalCompositeOperation = "source-over";
                         this.scrollOffset = -this.preloadSize;
 
                         for (i = 0; i < this.settings.numCircles; i++) {
