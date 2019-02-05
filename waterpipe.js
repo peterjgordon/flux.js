@@ -377,7 +377,7 @@
             if(this.timer) this.timer = window.requestAnimationFrame(() => {inst.onTimer()});
         },
         areClose: function(p1, p2) {
-            //checks if 2 points are as close as they can get at the current replay power and display ratio
+            // Checks if 2 points are as close as they can get at the current replay power and display ratio
             return Math.abs(p1 - p2) < this.settings.replayPower * this.settings.displayRatio / 100;
         },
         setLinePoints: function (iterations) {
@@ -422,7 +422,7 @@
                 }
             }
             
-            //normalize to values between 0 and 1
+            // normalize to values between 0 and 1
             if (maxY != minY) {
                 var normalizeRate = 1/(maxY - minY);
                 point = pointList.first;
@@ -431,7 +431,7 @@
                     point = point.next;
                 }
             }
-            //unlikely that max = min, but could happen if using zero iterations. In this case, set all points equal to 1.
+            // unlikely that max = min, but could happen if using zero iterations. In this case, set all points equal to 1.
             else {
                 point = pointList.first;
                 while (point != null) {
@@ -547,9 +547,9 @@
                     }
                     break;
                 case "figure eight":
-                    var screenCenterX = (this.canvasWidth + this.scrollOffset)/2;
+                    var screenCenterX = (this.canvasWidth - this.preloadSize)/2;
                     var screenCenterY = this.canvasHeight/2 - 50;
-                    var radius = Math.min(screenCenterX, screenCenterY) - this.settings.radius - 50;
+                    var radius = Math.min(screenCenterX, screenCenterY) - this.settings.radius*this.settings.displayRatio - 50;
                     var leftCenterX = screenCenterX - radius;
                     var rightCenterX = screenCenterX + radius;
                     for(var i=0; i<360; i+=1) {
@@ -560,11 +560,12 @@
                     }
                     break;
                 case "square":
+                    var radius = Math.round(inst.settings.radius * inst.settings.displayRatio);
                     inst.path = [
-                        {x: Math.round(inst.settings.radius), y: Math.round(inst.settings.radius + 50)},
-                        {x: Math.round(inst.canvasWidth + inst.scrollOffset - inst.settings.radius), y: Math.round(inst.settings.radius + 50)},
-                        {x: Math.round(inst.canvasWidth + inst.scrollOffset - inst.settings.radius), y: Math.round(inst.canvasHeight - inst.settings.radius - 50)},
-                        {x: Math.round(inst.settings.radius), y: Math.round(inst.canvasHeight - inst.settings.radius - 50)}
+                        {x: radius, y: radius + 50},
+                        {x: Math.round(inst.canvasWidth + inst.scrollOffset - radius), y: radius + 50},
+                        {x: Math.round(inst.canvasWidth + inst.scrollOffset - radius), y: Math.round(inst.canvasHeight - radius - 50)},
+                        {x: radius, y: Math.round(inst.canvasHeight - radius - 50)}
                     ];
                     break;
                 default:
