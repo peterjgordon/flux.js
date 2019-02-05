@@ -19,8 +19,7 @@
             gradientEnd: '#222222',
             smokeOpacity: 0.1,
             numCircles: 1,
-            maxMaxRad: 'auto',
-            minMaxRad: 'auto',
+            radius: 'auto',
             minRadFactor: 0,
             iterations: 8,
             drawsPerFrame: 10,
@@ -61,23 +60,24 @@
             this.basePreloadSize = 250;
             this.preloadSize = this.basePreloadSize * this.settings.displayRatio;
 
-            this.canvasWidth = this.$element[0].offsetWidth * this.settings.displayRatio + this.basePreloadSize;
-            this.canvasHeight = this.$element[0].offsetHeight * this.settings.displayRatio;
+            this.canvasWidth = this.element.offsetWidth * this.settings.displayRatio + this.basePreloadSize;
+            this.canvasHeight = this.element.offsetHeight * this.settings.displayRatio;
 
-            var radius = this.canvasHeight/5;
-            if(this.settings.maxMaxRad==='auto') this.settings.maxMaxRad = radius;
-            if(this.settings.minMaxRad==='auto') this.settings.minMaxRad = radius;
+            if(this.settings.radius==='auto') this.settings.radius = this.canvasHeight/5;
         },
         initCanvas: function () {
-            this.displayCanvas = this.$element.find('canvas')[0];
-            this.bufferCanvas = document.createElement("canvas");
-            this.fadeCanvas = document.createElement("canvas");
-            this.backgroundCanvas = document.createElement("canvas");
+            if(!this.displayCanvas) {
+                this.displayCanvas = this.$element.find('canvas')[0];
+                this.bufferCanvas = document.createElement("canvas");
+                this.fadeCanvas = document.createElement("canvas");
+                this.backgroundCanvas = document.createElement("canvas");
+            }
 
             this.displayCanvas.width = this.canvasWidth;
             this.displayCanvas.height = this.canvasHeight;
             this.displayCanvas.style.transformOrigin = "0 0"; // scale from top left
-            this.displayCanvas.style.transform = "scale(" + Math.min(window.innerWidth/(this.canvasWidth-this.basePreloadSize), window.innerHeight/this.canvasHeight) + ")"; // scale to fit window
+            var scaleToFit = Math.min(window.innerWidth/(this.canvasWidth-this.basePreloadSize), window.innerHeight/this.canvasHeight);
+            this.displayCanvas.style.transform = "scale(" + scaleToFit + ")"; // css transforms are faster as they use the GPU
             this.bufferCanvas.width = this.canvasWidth;
             this.bufferCanvas.height = this.canvasHeight;
             this.fadeCanvas.width = this.canvasWidth;
@@ -93,6 +93,8 @@
         initEvents: function() {
             // These should really be partly moved to the builder_scripts.js file
             // as they reference elements on the example page
+            $("#wavybg-wrapper").unbind();
+            $(window).unbind("keyup");
 
             // track mouse pos
             $("#wavybg-wrapper").on('mousedown touchstart', function(event) {
@@ -141,7 +143,7 @@
             this.setCircles();
 
             // reset mouse pos
-            this.mousePos = {x: $(document).width() * inst.settings.displayRatio, y: $(document).height()/2 * inst.settings.displayRatio};
+            this.mousePos = {x: $(document).width(), y: $(document).height()/2};
 
             // reset path drawing
             $("#path").val('');
@@ -184,7 +186,7 @@
             this.circles = [];
             
             for (i = 0; i < this.settings.numCircles; i++) {
-                maxR = this.settings.minMaxRad+Math.random()*(this.settings.maxMaxRad-this.settings.minMaxRad);
+                maxR = this.settings.radius*this.settings.displayRatio+Math.random();
                 minR = this.settings.minRadFactor*maxR;
                 
                 //define gradient
@@ -300,12 +302,14 @@
                             this.cleanCanvas(this.fadeContext);
                             this.cleanCanvas(this.bufferContext);
                             this.replayLastPointIndex = 0;
-                            c.centerX = this.path[0].x + this.preloadSize*2;
+                            c.centerX = this.path[0].x;
                             c.centerY = this.path[0].y;
+                            this.scrollOffset = 0;
                         }
                         replayLastPoint = this.path[this.replayLastPointIndex];
-                        actualX = Math.round(c.centerX + this.scrollOffset);
-                        if(actualX == replayLastPoint.x && Math.round(c.centerY) == replayLastPoint.y) {
+                        currentX = Math.round(c.centerX + this.scrollOffset);
+                        currentY = Math.round(c.centerY);
+                        if(currentX == replayLastPoint.x && currentY == replayLastPoint.y) {
                             // start moving to next point
                             this.replayLastPointIndex++;
                             if(this.replayLastPointIndex >= this.path.length) {
@@ -317,13 +321,17 @@
                                 this.cleanCanvas(this.bufferContext);
                             }
                         } else {
+                            // at high replay power sometimes an increment would be too big a step to reach the target
+                            if(this.areClose(currentX, replayLastPoint.x)) c.centerX = replayLastPoint.x - this.scrollOffset;
+                            if(this.areClose(currentY, replayLastPoint.y)) c.centerY = replayLastPoint.y;
+
                             // X
-                            if(replayLastPoint.x > actualX) c.centerX += inst.settings.replayPower * this.settings.displayRatio / 100;
-                            else if(replayLastPoint.x < actualX) c.centerX -= inst.settings.replayPower * this.settings.displayRatio / 100;
+                            if(replayLastPoint.x > currentX) c.centerX += inst.settings.replayPower * this.settings.displayRatio / 100;
+                            else if(replayLastPoint.x < currentX) c.centerX -= inst.settings.replayPower * this.settings.displayRatio / 100;
 
                             // Y
-                            if(c.centerY < replayLastPoint.y) c.centerY += inst.settings.replayPower * this.settings.displayRatio / 100;
-                            else if(c.centerY > replayLastPoint.y) c.centerY -= inst.settings.replayPower * this.settings.displayRatio / 100;
+                            if(currentY < replayLastPoint.y) c.centerY += inst.settings.replayPower * this.settings.displayRatio / 100;
+                            else if(currentY > replayLastPoint.y) c.centerY -= inst.settings.replayPower * this.settings.displayRatio / 100;
                         }
                     } else {
                         // X
@@ -367,6 +375,10 @@
             }
             this.context.drawImage(this.bufferCanvas, this.scrollOffset, 0);
             if(this.timer) this.timer = window.requestAnimationFrame(() => {inst.onTimer()});
+        },
+        areClose: function(p1, p2) {
+            //checks if 2 points are as close as they can get at the current replay power and display ratio
+            return Math.abs(p1 - p2) < this.settings.replayPower * this.settings.displayRatio / 100;
         },
         setLinePoints: function (iterations) {
             var pointList = {};
@@ -439,10 +451,11 @@
                     optionValue /= 100;
                     break;
                 case 'radius':
-                    var radius = this.canvasHeight/5*(params.radiusSize/100);
-                    this.setOption('maxMaxRad', radius);
-                    this.setOption('minMaxRad', radius);
-                    return;
+                    optionValue = optionValue / 100 * (window.innerHeight/5);
+                    break;
+                case 'displayRatio':
+                    optionValue /= 10;
+                    break;
             }
 
             this.settings[optionName] = optionValue;
@@ -526,9 +539,9 @@
             inst.path = [];
             switch(shape.toLowerCase()) {
                 case "circle":
-                    var centerX = (this.canvasWidth + this.scrollOffset)/2;
+                    var centerX = (this.canvasWidth - this.preloadSize)/2;
                     var centerY = this.canvasHeight/2;
-                    var radius = Math.min(centerX, centerY) - this.settings.maxMaxRad - 50;
+                    var radius = Math.min(centerX, centerY) - this.settings.radius*this.settings.displayRatio - 50;
                     for(var i=0; i<360; i+=1) {
                         inst.path.push(inst.getCirclePoint(centerX, centerY, radius, i));
                     }
@@ -536,7 +549,7 @@
                 case "figure eight":
                     var screenCenterX = (this.canvasWidth + this.scrollOffset)/2;
                     var screenCenterY = this.canvasHeight/2 - 50;
-                    var radius = Math.min(screenCenterX, screenCenterY) - this.settings.maxMaxRad - 50;
+                    var radius = Math.min(screenCenterX, screenCenterY) - this.settings.radius - 50;
                     var leftCenterX = screenCenterX - radius;
                     var rightCenterX = screenCenterX + radius;
                     for(var i=0; i<360; i+=1) {
@@ -548,14 +561,15 @@
                     break;
                 case "square":
                     inst.path = [
-                        {x: Math.round(inst.settings.maxMaxRad), y: Math.round(inst.settings.maxMaxRad + 50)},
-                        {x: Math.round(inst.canvasWidth + inst.scrollOffset - inst.settings.maxMaxRad), y: Math.round(inst.settings.maxMaxRad + 50)},
-                        {x: Math.round(inst.canvasWidth + inst.scrollOffset - inst.settings.maxMaxRad), y: Math.round(inst.canvasHeight - inst.settings.maxMaxRad - 50)},
-                        {x: Math.round(inst.settings.maxMaxRad), y: Math.round(inst.canvasHeight - inst.settings.maxMaxRad - 50)}
+                        {x: Math.round(inst.settings.radius), y: Math.round(inst.settings.radius + 50)},
+                        {x: Math.round(inst.canvasWidth + inst.scrollOffset - inst.settings.radius), y: Math.round(inst.settings.radius + 50)},
+                        {x: Math.round(inst.canvasWidth + inst.scrollOffset - inst.settings.radius), y: Math.round(inst.canvasHeight - inst.settings.radius - 50)},
+                        {x: Math.round(inst.settings.radius), y: Math.round(inst.canvasHeight - inst.settings.radius - 50)}
                     ];
                     break;
                 default:
                     inst.path = null;
+                    return;
             }
         }
     };

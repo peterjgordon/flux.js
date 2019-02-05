@@ -23,15 +23,13 @@
 		<h1>Waterpipe</h1>
 	</div>
 	<div class="generator-form-wrap">
-		<form id="ratio-form">
+		<form class="generator-params">
 			<h2>Canvas size</h2>
 			<div class="input-group">
 				<label for="ratio">Quality: <span class="value">1</span></label>
 				<div class="ratio-slider"></div>
-				<input type="hidden" id="ratio" name="ratio" value="10" class="slider"></input>
+				<input type="hidden" id="ratio" name="displayRatio" value="10" class="slider"></input>
 			</div>
-		</form>
-		<form class="generator-params">
 			<h2>Smoke style</h2>
 			<div class="input-group">
 				<label for="gradientStart">Gradient start:</label>
@@ -47,9 +45,9 @@
 				<input type="hidden" id="smokeOpacity" name="smokeOpacity" value="10" class="slider"></input>
 			</div>
 			<div class="input-group">
-				<label for="radiusSize">Smoke size: <span class="value">100%</span></label>
-				<div class="radiusSize-slider"></div>
-				<input type="hidden" id="radiusSize" name="radiusSize" value="100" class=""></input>
+				<label for="radius">Smoke size: <span class="value">100%</span></label>
+				<div class="radius-slider"></div>
+				<input type="hidden" id="radius" name="radius" value="100" class=""></input>
 			</div>
 			<div class="input-group">
 				<label for="lineWidth">Line width: <span class="value">2px</span></label>
