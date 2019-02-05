@@ -2,10 +2,10 @@
 
 Flux.js is a jQuery plugin that generates flux.
 
-![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/screenshot.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/screenshot.png)
 
 ## Examples
-Here are some examples generated using flux.js plugin. 
+Here are some examples generated using the flux.js plugin. 
 
 ![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-1.jpg)
 ![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-2.jpg)
