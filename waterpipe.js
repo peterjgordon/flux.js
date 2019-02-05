@@ -477,16 +477,12 @@
             return result;
         },
         download: function(){
-            // open new window
-            var imageWindow = window.open("", "fractalLineImage", "");
-            imageWindow.document.write("<title>Export Image</title>");
-            imageWindow.document.write("<img id='exportImage' alt='' style='position:absolute;left:0;top:0'/>");
-            imageWindow.document.close();
-
-            // export
-            var dataURL = this.displayCanvas.toDataURL("image/png");
-            var exportImage = imageWindow.document.getElementById("exportImage");
-            exportImage.src = dataURL;
+            var link = document.createElement("a");
+            link.download = "Flux-" + new Date().getTime();
+            this.displayCanvas.toBlob(function(blob) {
+                link.href = URL.createObjectURL(blob);
+                link.click();
+            })
         },
         toggleCapture: function(enable) {
             if (enable) {
