@@ -1,31 +1,31 @@
-# waterpipe.js - smoky backgrounds generator (HTML5 Canvas)
+# Flux.js - flux generator (HTML5 Canvas)
 
-waterpipe.js is a jQuery plugin for smoky backgrounds developed by [dragdropsite.com](http://www.dragdropsite.com)
+Flux.js is a jQuery plugin that generates flux.
 
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/screenshot.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/screenshot.jpg)
 
 ## Examples
-Here are some examples generated using waterpipe.js plugin. 
+Here are some examples generated using flux.js plugin. 
 
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-1.jpg)
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-2.jpg)
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-3.jpg)
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-4.jpg)
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-5.jpg)
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-6.jpg)
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-7.jpg)
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-8.jpg)
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-9.jpg)
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-10.jpg)
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-11.jpg)
-![alt tag](https://raw.github.com/dragdropsite/waterpipe.js/master/img/samples/sample-12.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-1.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-2.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-3.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-4.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-5.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-6.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-7.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-8.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-9.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-10.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-11.jpg)
+![alt tag](https://raw.github.com/peterjgordon/flux.js/master/img/samples/sample-12.jpg)
 
 ## Usage
 
-**1. Include jQuery and waterpipe.js**
+**1. Include jQuery and flux.js**
 
     <script src="lib/jquery-1.11.0.min.js"></script>
-    <script src="waterpipe.js"></script>
+    <script src="flux.js"></script>
 
 **2. Create wrapper with canvas element inside**
 
@@ -35,7 +35,7 @@ Here are some examples generated using waterpipe.js plugin.
 
 **3. Initialize with**
 
-    var smokyBG = $('#wavybg-wrapper').waterpipe({
+    var smokyBG = $('#wavybg-wrapper').flux({
         //Default values
         gradientStart: '#000000',
         gradientEnd: '#222222',
@@ -72,7 +72,7 @@ Here are some examples generated using waterpipe.js plugin.
 
 ## Methods
 
-The following code could be used to call a method: `smokyBG.data('waterpipe').generate();`Please make sure variable smokyBG exists
+The following code could be used to call a method: `smokyBG.data('flux').generate();`Please make sure variable smokyBG exists
 
 | Method    | Arguments   | Description                                                                                     |
 |-----------|-------------|-------------------------------------------------------------------------------------------------|
@@ -84,7 +84,7 @@ The following code could be used to call a method: `smokyBG.data('waterpipe').ge
 
 ## Demo
 
-Please check the demo to generate and download your own smoky backgrounds: [http://dragdropsite.github.io/waterpipe.js](http://dragdropsite.github.io/waterpipe.js)
+Please check the demo to generate and download your own flux: [https://peterjgordon.github.io/flux.js](https://peterjgordon.github.io/flux.js)
 
 ## Credits
 

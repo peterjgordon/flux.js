@@ -1,6 +1,6 @@
 /*
- *  waterpipe.js - v1.0
- *  jQuery plugin. Smoky backgrounds generator
+ *  flux.js - v1.0
+ *  jQuery plugin. Flux generator
  *  http://www.dragdropsite.com
  *
  *  Made by dragdropsite.com
@@ -11,9 +11,9 @@
  */
 
 ;(function ( $, window, document, undefined ) {
-    var pluginName = "waterpipe",
+    var pluginName = "flux",
         defaults = {
-            // Smoke
+            // Flux
             displayRatio: 1,
             gradientStart: '#000000',
             gradientEnd: '#222222',
@@ -514,7 +514,7 @@
             var a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            a.download = 'Waterpipe-' + Math.round(new Date().getTime()/1000) + '.webm';
+            a.download = 'Flux-' + Math.round(new Date().getTime()/1000) + '.webm';
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
