@@ -57,9 +57,6 @@
             this.generate();
         },
         initSettings: function () {
-            this.settings.mousePower *= this.settings.displayRatio;
-            this.settings.replayPower *= this.settings.displayRatio;
-
             // preload area, offscreen to left and right
             this.basePreloadSize = 250;
             this.preloadSize = this.basePreloadSize * this.settings.displayRatio;
@@ -215,15 +212,15 @@
                 newCircle.pointList2 = this.setLinePoints(this.settings.iterations);
             }
         },
-        toggleMovement: function(forceEnable) {
+        toggleMovement: function(force) {
+            // 'force' will force enable/disable timer and is optional
             var hadNoTimer = this.timer == null;
             if(this.timer) {
                 window.cancelAnimationFrame(this.timer);
                 this.timer = null;
             }
-            if(forceEnable || hadNoTimer) {
+            if(force || (hadNoTimer && force !== false)) {
                 this.timer = window.requestAnimationFrame(() => {inst.onTimer()});
-                // TODO: inst.settings.speed
             }
         },
         fadeOverTime: function() {
@@ -255,7 +252,7 @@
                 if (this.replayLastPointIndex == null) {
                     // CONTINUOUS SCROLLING
                     // (disabled in replay mode)
-                    if (this.scrollOffset > -this.preloadSize*2) this.scrollOffset -= (this.settings.mousePower || this._defaults.mousePower)/50;
+                    if (this.scrollOffset > -this.preloadSize*2) this.scrollOffset -= this.settings.mousePower * this.settings.displayRatio / 50;
                     
                     if (this.circles[0].centerX + this.preloadSize > this.canvasWidth) {
                         this.bufferContext.globalCompositeOperation = "copy";
@@ -321,21 +318,21 @@
                             }
                         } else {
                             // X
-                            if(replayLastPoint.x > actualX) c.centerX += inst.settings.replayPower/100;
-                            else if(replayLastPoint.x < actualX) c.centerX -= inst.settings.replayPower/100;
+                            if(replayLastPoint.x > actualX) c.centerX += inst.settings.replayPower * this.settings.displayRatio / 100;
+                            else if(replayLastPoint.x < actualX) c.centerX -= inst.settings.replayPower * this.settings.displayRatio / 100;
 
                             // Y
-                            if(c.centerY < replayLastPoint.y) c.centerY += inst.settings.replayPower/100;
-                            else if(c.centerY > replayLastPoint.y) c.centerY -= inst.settings.replayPower/100;
+                            if(c.centerY < replayLastPoint.y) c.centerY += inst.settings.replayPower * this.settings.displayRatio / 100;
+                            else if(c.centerY > replayLastPoint.y) c.centerY -= inst.settings.replayPower * this.settings.displayRatio / 100;
                         }
                     } else {
                         // X
-                        if (this.mousePos.x >= c.centerX - this.preloadSize*2) c.centerX += (this.settings.mousePower || this._defaults.mousePower)/50;
-                        else c.centerX -= (this.settings.mousePower || this._defaults.mousePower)/50;
+                        if (this.mousePos.x >= c.centerX - this.preloadSize*2) c.centerX += this.settings.mousePower * this.settings.displayRatio / 50;
+                        else c.centerX -= this.settings.mousePower * this.settings.displayRatio / 50;
 
                         // Y
-                        if (this.mousePos.y >= c.centerY) c.centerY += (this.settings.mousePower || this._defaults.mousePower)/50;
-                        else c.centerY -= (this.settings.mousePower || this._defaults.mousePower)/50;
+                        if (this.mousePos.y >= c.centerY) c.centerY += this.settings.mousePower * this.settings.displayRatio / 50;
+                        else c.centerY -= this.settings.mousePower * this.settings.displayRatio / 50;
                     }
                     yOffset = 40*Math.sin(c.globalPhase + this.drawCount/1000*TWO_PI);
                     
@@ -438,10 +435,6 @@
 
             // special cases
             switch(optionName) {
-                case 'mousePower':
-                case 'replayPower':
-                    optionValue *= this.settings.displayRatio;
-                    break;
                 case 'smokeOpacity':
                     optionValue /= 100;
                     break;
