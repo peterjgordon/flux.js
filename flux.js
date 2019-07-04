@@ -186,28 +186,26 @@
             this.circles = [];
             
             for (i = 0; i < this.settings.numCircles; i++) {
-                maxR = this.settings.radius*this.settings.displayRatio+Math.random();
-                minR = this.settings.minRadFactor*maxR;
+                maxR = this.settings.radius * this.settings.displayRatio + Math.random();
+                minR = this.settings.minRadFactor * maxR;
                 
                 //define gradient
-                grad = this.bufferContext.createRadialGradient(0,0,minR,0,0,maxR);
+                grad = this.bufferContext.createRadialGradient(0, 0, minR, 0, 0, maxR);
                 var gradientStart = this.hexToRGBA(this.settings.gradientStart, this.settings.smokeOpacity),
                     gradientEnd = this.hexToRGBA(this.settings.gradientEnd, this.settings.smokeOpacity);
+                grad.addColorStop(1, gradientStart);
+                grad.addColorStop(0, gradientEnd);
 
-                grad.addColorStop(1,gradientStart);
-                grad.addColorStop(0,gradientEnd);
-                
                 var newCircle = {
-                    centerX: -maxR + this.preloadSize*2,
-                    centerY: this.canvasHeight/2-50,
-                    maxRad : maxR,
-                    minRad : minR,
-                    color: grad, //can set a gradient or solid color here.
-                    //fillColor: "rgba(0,0,0,1)",
-                    param : 0,
-                    changeSpeed : 1/250,
-                    phase : Math.PI, //the phase to use for a single fractal curve.
-                    globalPhase: Math.PI //the curve as a whole will rise and fall by a sinusoid.
+                    centerX     : -maxR + this.preloadSize * 2,
+                    centerY     : this.canvasHeight / 2 - 50,
+                    maxRad      : maxR,
+                    minRad      : minR,
+                    color       : grad, //can set a gradient or solid color here.
+                    param       : 0,
+                    changeSpeed : 1 / 250,
+                    phase       : Math.PI, //the phase to use for a single fractal curve.
+                    globalPhase : Math.PI  //the curve as a whole will rise and fall by a sinusoid.
                 };
                 this.circles.push(newCircle);
                 newCircle.pointList1 = this.setLinePoints(this.settings.iterations);
@@ -223,28 +221,26 @@
             var point;
             var nextPoint;
             var dx, newX, newY;
-            var ratio;
-            
-            var minRatio = 0.5;
                     
             pointList.first.next = lastPoint;
-            for (var i = 0; i < iterations; i++) {
+            for (var i = 0; i < iterations; i++) { // the list will double in size with each iteration (1, 2, 4, 8, ...)
                 point = pointList.first;
                 while (point.next != null) {
                     nextPoint = point.next;
                     
                     dx = nextPoint.x - point.x;
-                    newX = 0.5*(point.x + nextPoint.x);
-                    newY = 0.5*(point.y + nextPoint.y);
-                    newY += dx*(Math.random()*2 - 1);
+                    // newX and newY will be halfway between the values of the points it is being inserted between (mean average)
+                    newX = 0.5 * (point.x + nextPoint.x);
+                    newY = 0.5 * (point.y + nextPoint.y);
+                    // newY is increased by the change in x * a random number between -1 and 1.
+                    newY += dx * (Math.random() * 2 - 1);
                     
-                    var newPoint = {x:newX, y:newY};
+                    var newPoint = {x: newX, y: newY};
                     
                     //min, max
                     if (newY < minY) {
                         minY = newY;
-                    }
-                    else if (newY > maxY) {
+                    } else if (newY > maxY) {
                         maxY = newY;
                     }
                     
@@ -258,10 +254,10 @@
             
             // normalize to values between 0 and 1
             if (maxY != minY) {
-                var normalizeRate = 1/(maxY - minY);
+                var normalizeRate = 1 / (maxY - minY);
                 point = pointList.first;
                 while (point != null) {
-                    point.y = normalizeRate*(point.y - minY);
+                    point.y = normalizeRate * (point.y - minY);
                     point = point.next;
                 }
             }
@@ -273,8 +269,7 @@
                     point = point.next;
                 }
             }
-            
-            return pointList;       
+            return pointList;
         },
         toggleMovement: function(force) {
             // 'force' will force enable/disable timer and is optional
@@ -345,7 +340,6 @@
                     
                     this.bufferContext.strokeStyle = c.color;
                     this.bufferContext.lineWidth = this.settings.lineWidth;
-                    //context.fillStyle = c.fillColor;
                     this.bufferContext.beginPath();
                     point1 = c.pointList1.first;
                     point2 = c.pointList2.first;
@@ -404,7 +398,7 @@
                         if (this.mousePos.y >= c.centerY) c.centerY += this.settings.mousePower * this.settings.displayRatio / 50;
                         else c.centerY -= this.settings.mousePower * this.settings.displayRatio / 50;
                     }
-                    yOffset = 40*Math.sin(c.globalPhase + this.drawCount/1000*TWO_PI);
+                    yOffset = 40 * Math.sin(c.globalPhase + this.drawCount / 1000 * TWO_PI);
                     
                     //we are drawing in new position by applying a transform. We are doing this so the gradient will move with the drawing.
                     this.bufferContext.setTransform(xSqueeze,0,0,1,c.centerX,c.centerY+yOffset);
