@@ -214,6 +214,68 @@
                 newCircle.pointList2 = this.setLinePoints(this.settings.iterations);
             }
         },
+        setLinePoints: function (iterations) {
+            var pointList = {};
+            pointList.first = {x:0, y:1};
+            var lastPoint = {x:1, y:1};
+            var minY = 1;
+            var maxY = 1;
+            var point;
+            var nextPoint;
+            var dx, newX, newY;
+            var ratio;
+            
+            var minRatio = 0.5;
+                    
+            pointList.first.next = lastPoint;
+            for (var i = 0; i < iterations; i++) {
+                point = pointList.first;
+                while (point.next != null) {
+                    nextPoint = point.next;
+                    
+                    dx = nextPoint.x - point.x;
+                    newX = 0.5*(point.x + nextPoint.x);
+                    newY = 0.5*(point.y + nextPoint.y);
+                    newY += dx*(Math.random()*2 - 1);
+                    
+                    var newPoint = {x:newX, y:newY};
+                    
+                    //min, max
+                    if (newY < minY) {
+                        minY = newY;
+                    }
+                    else if (newY > maxY) {
+                        maxY = newY;
+                    }
+                    
+                    //put between points
+                    newPoint.next = nextPoint;
+                    point.next = newPoint;
+                    
+                    point = nextPoint;
+                }
+            }
+            
+            // normalize to values between 0 and 1
+            if (maxY != minY) {
+                var normalizeRate = 1/(maxY - minY);
+                point = pointList.first;
+                while (point != null) {
+                    point.y = normalizeRate*(point.y - minY);
+                    point = point.next;
+                }
+            }
+            // unlikely that max = min, but could happen if using zero iterations. In this case, set all points equal to 1.
+            else {
+                point = pointList.first;
+                while (point != null) {
+                    point.y = 1;
+                    point = point.next;
+                }
+            }
+            
+            return pointList;       
+        },
         toggleMovement: function(force) {
             // 'force' will force enable/disable timer and is optional
             var hadNoTimer = this.timer == null;
@@ -379,68 +441,6 @@
         areClose: function(p1, p2) {
             // Checks if 2 points are as close as they can get at the current replay power and display ratio
             return Math.abs(p1 - p2) < this.settings.replayPower * this.settings.displayRatio / 100;
-        },
-        setLinePoints: function (iterations) {
-            var pointList = {};
-            pointList.first = {x:0, y:1};
-            var lastPoint = {x:1, y:1};
-            var minY = 1;
-            var maxY = 1;
-            var point;
-            var nextPoint;
-            var dx, newX, newY;
-            var ratio;
-            
-            var minRatio = 0.5;
-                    
-            pointList.first.next = lastPoint;
-            for (var i = 0; i < iterations; i++) {
-                point = pointList.first;
-                while (point.next != null) {
-                    nextPoint = point.next;
-                    
-                    dx = nextPoint.x - point.x;
-                    newX = 0.5*(point.x + nextPoint.x);
-                    newY = 0.5*(point.y + nextPoint.y);
-                    newY += dx*(Math.random()*2 - 1);
-                    
-                    var newPoint = {x:newX, y:newY};
-                    
-                    //min, max
-                    if (newY < minY) {
-                        minY = newY;
-                    }
-                    else if (newY > maxY) {
-                        maxY = newY;
-                    }
-                    
-                    //put between points
-                    newPoint.next = nextPoint;
-                    point.next = newPoint;
-                    
-                    point = nextPoint;
-                }
-            }
-            
-            // normalize to values between 0 and 1
-            if (maxY != minY) {
-                var normalizeRate = 1/(maxY - minY);
-                point = pointList.first;
-                while (point != null) {
-                    point.y = normalizeRate*(point.y - minY);
-                    point = point.next;
-                }
-            }
-            // unlikely that max = min, but could happen if using zero iterations. In this case, set all points equal to 1.
-            else {
-                point = pointList.first;
-                while (point != null) {
-                    point.y = 1;
-                    point = point.next;
-                }
-            }
-            
-            return pointList;       
         },
         setOption: function (optionName, optionValue) {
             if(!isNaN(optionValue)) optionValue = parseFloat(optionValue);
