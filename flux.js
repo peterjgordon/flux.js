@@ -138,7 +138,7 @@
             this.drawCount = 0;
             this.scrollOffset = -this.preloadSize*2;
             this.cleanCanvas(this.bufferContext);
-            this.fillBackground();
+            if(!this.settings.disableBg) this.fillBackground();
             
             this.setCircles();
 
@@ -374,7 +374,7 @@
                 this.context.globalAlpha = 1;
             }
             this.context.drawImage(this.bufferCanvas, this.scrollOffset, 0);
-            if(this.timer) this.timer = window.requestAnimationFrame(() => {inst.onTimer()});
+            if(this.timer) this.timer = window.requestAnimationFrame(() => inst.onTimer());
         },
         areClose: function(p1, p2) {
             // Checks if 2 points are as close as they can get at the current replay power and display ratio
