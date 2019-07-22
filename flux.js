@@ -506,10 +506,10 @@
                 radial.setAttributeNS(null, 'id', 'gradient');
                 radial.setAttributeNS(null, 'fx', 0); // start circle x
                 radial.setAttributeNS(null, 'fy', 0); // start circle y
-                radial.setAttributeNS(null, 'fr', 0); // start radius
+                radial.setAttributeNS(null, 'fr', 2); // start radius
                 radial.setAttributeNS(null, 'cx', 0); // end circle x
                 radial.setAttributeNS(null, 'cy', 0); // end circle y
-                radial.setAttributeNS(null, 'r', 1); // end radius
+                radial.setAttributeNS(null, 'r', 0); // end radius
                 var start = document.createElementNS(svg.namespaceURI, 'stop');
                 start.setAttributeNS(null, 'offset', 0);
                 start.setAttributeNS(null, 'stop-color', this.hexToRGBA(this.settings.gradientStart, this.settings.smokeOpacity));
