@@ -35,7 +35,7 @@ Here are some examples generated using the flux.js plugin.
 
 **3. Initialize with**
 
-    var smokyBG = $('#wavybg-wrapper').flux({
+    var flux = $('#wavybg-wrapper').flux({
         //Default values
         gradientStart: '#000000',
         gradientEnd: '#222222',
@@ -72,7 +72,7 @@ Here are some examples generated using the flux.js plugin.
 
 ## Methods
 
-The following code could be used to call a method: `smokyBG.data('flux').generate();`Please make sure variable smokyBG exists
+The following code could be used to call a method: `flux.data('flux').generate();`. Please make sure variable `flux` exists.
 
 | Method    | Arguments   | Description                                                                                     |
 |-----------|-------------|-------------------------------------------------------------------------------------------------|

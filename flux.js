@@ -32,7 +32,9 @@
             // Background
             bgColorInner: "#ffffff",
             bgColorOuter: "#666666",
-            disableBg: true
+            disableBg: true,
+            // Generation
+            generateSVG: false
         };
 
     var TWO_PI = 2*Math.PI;
@@ -63,7 +65,7 @@
             this.canvasWidth = this.element.offsetWidth * this.settings.displayRatio + this.basePreloadSize;
             this.canvasHeight = this.element.offsetHeight * this.settings.displayRatio;
 
-            if(this.settings.radius==='auto') this.settings.radius = this.canvasHeight/5;
+            if(this.settings.radius === 'auto') this.settings.radius = this.canvasHeight / 5;
         },
         initCanvas: function () {
             if(!this.displayCanvas) {
@@ -88,16 +90,14 @@
             this.context = this.displayCanvas.getContext("2d");
             this.bufferContext = this.bufferCanvas.getContext("2d");
             this.fadeContext = this.fadeCanvas.getContext("2d");
-            this.backgroundContext = this.backgroundCanvas.getContext("2d", { alpha: false });
+            this.backgroundContext = this.backgroundCanvas.getContext("2d", {alpha: false});
         },
         initEvents: function() {
-            // These should really be partly moved to the builder_scripts.js file
-            // as they reference elements on the example page
-            $("#wavybg-wrapper").unbind();
+            this.$element.unbind();
             $(window).unbind("keyup");
 
             // track mouse pos
-            $("#wavybg-wrapper").on('mousedown touchstart', function(event) {
+            this.$element.on('mousedown touchstart', function(event) {
                 var pos = event.type == 'touchstart' ? event.originalEvent.touches[0] : event;
 
                 $("#path").val('');
@@ -106,7 +106,7 @@
                 inst.replayLastPointIndex = null;
                 inst.path.push({x: Math.round(pos.clientX * inst.settings.displayRatio), y: Math.round(pos.clientY * inst.settings.displayRatio)});
             });
-            $("#wavybg-wrapper").on('mousemove touchmove', function(event) {
+            this.$element.on('mousemove touchmove', function(event) {
                 var pos = event.type == 'touchmove' ? event.originalEvent.touches[0] : event;
                 if(inst.drawing) {
                     inst.path.push({x: Math.round(pos.clientX * inst.settings.displayRatio), y: Math.round(pos.clientY * inst.settings.displayRatio)});
@@ -115,7 +115,7 @@
 
                 inst.mousePos = {x: pos.clientX * inst.settings.displayRatio, y: pos.clientY * inst.settings.displayRatio};
             });
-            $("#wavybg-wrapper").on('mouseup touchend touchcancel', function(event) {
+            this.$element.on('mouseup touchend touchcancel', function(event) {
                 if(inst.drawing) {
                     if(event.type == 'mouseup') {
                         // Mouse has a final position in mouseup, touchend doesn't
@@ -182,30 +182,30 @@
             var r,g,b,a;
             var maxR, minR;
             var grad;
-            
+
             this.circles = [];
-            
+
             for (i = 0; i < this.settings.numCircles; i++) {
                 maxR = this.settings.radius * this.settings.displayRatio + Math.random();
                 minR = this.settings.minRadFactor * maxR;
-                
-                //define gradient
+
+                // define gradient
                 grad = this.bufferContext.createRadialGradient(0, 0, minR, 0, 0, maxR);
                 var gradientStart = this.hexToRGBA(this.settings.gradientStart, this.settings.smokeOpacity),
                     gradientEnd = this.hexToRGBA(this.settings.gradientEnd, this.settings.smokeOpacity);
-                grad.addColorStop(1, gradientStart);
-                grad.addColorStop(0, gradientEnd);
+                grad.addColorStop(0, gradientStart);
+                grad.addColorStop(1, gradientEnd);
 
                 var newCircle = {
                     centerX     : -maxR + this.preloadSize * 2,
                     centerY     : this.canvasHeight / 2 - 50,
                     maxRad      : maxR,
                     minRad      : minR,
-                    color       : grad, //can set a gradient or solid color here.
+                    color       : grad, // can set a gradient or solid color here.
                     param       : 0,
                     changeSpeed : 1 / 250,
-                    phase       : Math.PI, //the phase to use for a single fractal curve.
-                    globalPhase : Math.PI  //the curve as a whole will rise and fall by a sinusoid.
+                    phase       : Math.PI, // the phase to use for a single fractal curve.
+                    globalPhase : Math.PI  // the curve as a whole will rise and fall by a sinusoid.
                 };
                 this.circles.push(newCircle);
                 newCircle.pointList1 = this.setLinePoints(this.settings.iterations);
@@ -304,7 +304,7 @@
             
             var yOffset;
             
-            //draw circles
+            // calculate circle positioning
             for (j = 0; j < this.settings.drawsPerFrame; j++) {
                 
                 this.drawCount++;
@@ -407,7 +407,7 @@
                     //It is like drawing a circle, except with varying radius.
                     x0 = xSqueeze*rad*Math.cos(theta);
                     y0 = rad*Math.sin(theta);
-                    this.bufferContext.lineTo(x0, y0);
+                    this.recordLine(x0, y0, {x: c.centerX, y: c.centerY+yOffset}, true);
                     while (point1.next != null) {
                         point1 = point1.next;
                         point2 = point2.next;
@@ -415,13 +415,13 @@
                         rad = c.minRad + (point1.y + cosParam*(point2.y-point1.y))*(c.maxRad - c.minRad);
                         x0 = xSqueeze*rad*Math.cos(theta);
                         y0 = rad*Math.sin(theta);
-                        this.bufferContext.lineTo(x0, y0);
+                        this.recordLine(x0, y0, {x: c.centerX, y: c.centerY+yOffset});
                     }
                     this.bufferContext.closePath();
                     this.bufferContext.stroke();
-                    //context.fill();
                 }
             }
+            // DRAW
             if(this.settings.disableBg) this.cleanCanvas(this.context);
             else this.context.drawImage(this.backgroundCanvas, 0, 0);
             if(this.replayLastPointIndex != null) {
@@ -431,6 +431,25 @@
             }
             this.context.drawImage(this.bufferCanvas, this.scrollOffset, 0);
             if(this.timer) this.timer = window.requestAnimationFrame(() => inst.onTimer());
+        },
+        recordLine: function(x, y, circle, isNew) {
+            if(this.settings.generateSVG) {
+                // Line history is only required for SVG generation
+                if(!this.history) {
+                    this.history = [];
+                    this.historyOffset = -circle.x;
+                }
+                if(this.history.length > 5000) this.history.splice(0, 1000);
+                if(isNew) {
+                    if(this.lastHistory && Math.abs(this.lastHistory.center.x - circle.x - this.preloadSize) < 5) { // detect preload jump (+/- 5px)
+                        this.historyOffset += this.preloadSize;
+                    }
+                    this.lastHistory = {center: {x: circle.x, y: circle.y}, points: []};
+                    this.history.push(this.lastHistory);
+                }
+                this.lastHistory.points.push({x: x + circle.x + this.historyOffset, y: y + circle.y});
+            }
+            this.bufferContext.lineTo(x, y);
         },
         areClose: function(p1, p2) {
             // Checks if 2 points are as close as they can get at the current replay power and display ratio
@@ -473,10 +492,62 @@
         download: function(){
             var link = document.createElement("a");
             link.download = "Flux-" + new Date().getTime();
-            this.displayCanvas.toBlob(function(blob) {
+
+            // SVG
+            if(this.settings.generateSVG) {
+                var svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+                svg.setAttributeNS(null, 'width', this.history[this.history.length-1].points[0].x + this.settings.radius * this.settings.displayRatio + 1);
+                svg.setAttributeNS(null, 'height', this.history[this.history.length-1].points[0].y * 2 + this.settings.radius * this.settings.displayRatio + 1);
+                // svg colour gradient
+                var maxR = this.settings.radius * this.settings.displayRatio + Math.random();
+                var minR = this.settings.minRadFactor * maxR;
+                var defs = document.createElementNS(svg.namespaceURI, 'defs');
+                var radial = document.createElementNS(svg.namespaceURI, 'radialGradient');
+                radial.setAttributeNS(null, 'id', 'gradient');
+                radial.setAttributeNS(null, 'fx', 0); // start circle x
+                radial.setAttributeNS(null, 'fy', 0); // start circle y
+                radial.setAttributeNS(null, 'fr', 0); // start radius
+                radial.setAttributeNS(null, 'cx', 0); // end circle x
+                radial.setAttributeNS(null, 'cy', 0); // end circle y
+                radial.setAttributeNS(null, 'r', 1); // end radius
+                var start = document.createElementNS(svg.namespaceURI, 'stop');
+                start.setAttributeNS(null, 'offset', 0);
+                start.setAttributeNS(null, 'stop-color', this.hexToRGBA(this.settings.gradientStart, this.settings.smokeOpacity));
+                radial.appendChild(start);
+                var finish = document.createElementNS(svg.namespaceURI, 'stop');
+                finish.setAttributeNS(null, 'offset', 1);
+                finish.setAttributeNS(null, 'stop-color', this.hexToRGBA(this.settings.gradientEnd, this.settings.smokeOpacity));
+                radial.appendChild(finish);
+                defs.appendChild(radial);
+                svg.appendChild(defs);
+                // svg circle points
+                var xOffset = this.history[0].points[0].x;
+                this.history.forEach((circle, i) => {
+                    var path = document.createElementNS(svg.namespaceURI, 'path');
+                    path.setAttributeNS(null, 'id', i);
+                    var points = [];
+                    circle.points.forEach((point, i) => {
+                        points.push((i == 0 ? 'M' : 'L') + ' ' + (point.x - xOffset) + ' ' + point.y);
+                    });
+                    path.setAttributeNS(null, 'd', points.join(' ') + ' Z');
+                    path.setAttributeNS(null, 'stroke', 'url(#gradient)');
+                    path.setAttributeNS(null, 'stroke-width', this.settings.lineWidth);
+                    path.setAttributeNS(null, 'fill', 'none');
+                    svg.appendChild(path);
+                });
+                // download svg
+                // window.open("about:blank").document.body.appendChild(svg);
+                var xml = new XMLSerializer().serializeToString(svg);
+                var blob = new Blob([xml], {type: 'image/svg+xml;charset=utf-8'});
                 link.href = URL.createObjectURL(blob);
                 link.click();
-            })
+            } else {
+                // Default to PNG
+                this.displayCanvas.toBlob(function(blob) {
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                })
+            }
         },
         toggleCapture: function(enable) {
             if (enable) {
