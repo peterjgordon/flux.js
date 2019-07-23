@@ -501,15 +501,19 @@
                 // svg colour gradient
                 var maxR = this.settings.radius * this.settings.displayRatio + Math.random();
                 var minR = this.settings.minRadFactor * maxR;
+                var style = document.createElement('style');
+                style.type = 'text/css';
+                style.innerHTML = 'path {stroke: url(#radGradient); stroke-width: ' + this.settings.lineWidth + '; fill: none;}';
+                svg.appendChild(style);
                 var defs = document.createElementNS(svg.namespaceURI, 'defs');
                 var radial = document.createElementNS(svg.namespaceURI, 'radialGradient');
-                radial.setAttributeNS(null, 'id', 'gradient');
+                radial.setAttributeNS(null, 'id', 'radGradient');
                 radial.setAttributeNS(null, 'fx', 0); // start circle x
                 radial.setAttributeNS(null, 'fy', 0); // start circle y
-                radial.setAttributeNS(null, 'fr', 2); // start radius
+                radial.setAttributeNS(null, 'fr', 0); // start radius
                 radial.setAttributeNS(null, 'cx', 0); // end circle x
                 radial.setAttributeNS(null, 'cy', 0); // end circle y
-                radial.setAttributeNS(null, 'r', 0); // end radius
+                radial.setAttributeNS(null, 'r', 2); // end radius
                 var start = document.createElementNS(svg.namespaceURI, 'stop');
                 start.setAttributeNS(null, 'offset', 0);
                 start.setAttributeNS(null, 'stop-color', this.hexToRGBA(this.settings.gradientStart, this.settings.smokeOpacity));
@@ -530,9 +534,9 @@
                         points.push((i == 0 ? 'M' : 'L') + ' ' + (point.x - xOffset) + ' ' + point.y);
                     });
                     path.setAttributeNS(null, 'd', points.join(' ') + ' Z');
-                    path.setAttributeNS(null, 'stroke', 'url(#gradient)');
-                    path.setAttributeNS(null, 'stroke-width', this.settings.lineWidth);
-                    path.setAttributeNS(null, 'fill', 'none');
+                    // path.setAttributeNS(null, 'stroke', 'url(#radGradient)');
+                    // path.setAttributeNS(null, 'stroke-width', this.settings.lineWidth);
+                    // path.setAttributeNS(null, 'fill', 'none');
                     svg.appendChild(path);
                 });
                 // download svg
