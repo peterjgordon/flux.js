@@ -496,14 +496,15 @@
             // SVG
             if(this.settings.generateSVG) {
                 var svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-                svg.setAttributeNS(null, 'width', this.history[this.history.length-1].points[0].x + this.settings.radius * this.settings.displayRatio + 1);
+                svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+                svg.setAttributeNS(null, 'width', this.history[this.history.length-1].points[0].x + this.settings.radius * 2 * this.settings.displayRatio + 1);
                 svg.setAttributeNS(null, 'height', this.history[this.history.length-1].points[0].y * 2 + this.settings.radius * this.settings.displayRatio + 1);
                 // svg colour gradient
                 var maxR = this.settings.radius * this.settings.displayRatio + Math.random();
                 var minR = this.settings.minRadFactor * maxR;
                 var style = document.createElement('style');
                 style.type = 'text/css';
-                style.innerHTML = 'path {stroke: url(#radGradient); stroke-width: ' + this.settings.lineWidth + '; fill: none;}';
+                style.innerHTML = 'path {stroke: url(#radGradient); stroke-width: ' + this.settings.lineWidth + '; fill: none; opacity: ' + this.settings.smokeOpacity + ';}';
                 svg.appendChild(style);
                 var defs = document.createElementNS(svg.namespaceURI, 'defs');
                 var radial = document.createElementNS(svg.namespaceURI, 'radialGradient');
@@ -516,11 +517,11 @@
                 radial.setAttributeNS(null, 'r', 2); // end radius
                 var start = document.createElementNS(svg.namespaceURI, 'stop');
                 start.setAttributeNS(null, 'offset', 0);
-                start.setAttributeNS(null, 'stop-color', this.hexToRGBA(this.settings.gradientStart, this.settings.smokeOpacity));
+                start.setAttributeNS(null, 'stop-color', this.settings.gradientStart);
                 radial.appendChild(start);
                 var finish = document.createElementNS(svg.namespaceURI, 'stop');
                 finish.setAttributeNS(null, 'offset', 1);
-                finish.setAttributeNS(null, 'stop-color', this.hexToRGBA(this.settings.gradientEnd, this.settings.smokeOpacity));
+                finish.setAttributeNS(null, 'stop-color', this.settings.gradientEnd);
                 radial.appendChild(finish);
                 defs.appendChild(radial);
                 svg.appendChild(defs);
