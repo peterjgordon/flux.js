@@ -496,7 +496,7 @@
             // SVG
             if(this.settings.generateSVG) {
                 var svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-                svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+                // svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
                 svg.setAttributeNS(null, 'width', this.history[this.history.length-1].points[0].x + this.settings.radius * 2 * this.settings.displayRatio + 1);
                 svg.setAttributeNS(null, 'height', this.history[this.history.length-1].points[0].y * 2 + this.settings.radius * this.settings.displayRatio + 1);
                 // svg colour gradient
